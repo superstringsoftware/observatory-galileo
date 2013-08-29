@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Observatory.coffee</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>Observatory.coffee</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h2">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h2>Observatory</h2>
+<p>Observatory-galileo is a nodejs / client logging framework with flexible architecture.
+It was developed as a basis for <a href="http://observatoryjs.com">Observatory Logging &amp; Monitoring Suite</a>
+but can be used standalone independent of <a href="http://meteor.com">Meteor</a>.
+Although you should <em>really</em> try Meteor. You&#39;ll love it, we promise :)</p>
+<p>Below is the full API documentation, useful if you want to extend the framework. If you just want to
+jump to usage, start reading with <a href="#abcde">Generic Emitter</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>_ = require <span class="string">'underscore'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h3">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h3>Constants and common definitions</h3>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>Observatory =</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>Log level (severity) definitions</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  LOGLEVEL:
+    SILENT: -<span class="number">1</span>
+    FATAL: <span class="number">0</span>
+    ERROR: <span class="number">1</span>
+    WARNING: <span class="number">2</span>
+    INFO: <span class="number">3</span>
+    VERBOSE: <span class="number">4</span>
+    DEBUG: <span class="number">5</span>
+    MAX: <span class="number">6</span>
+    NAMES: [<span class="string">"FATAL"</span>, <span class="string">"ERROR"</span>, <span class="string">"WARNING"</span>, <span class="string">"INFO"</span>, <span class="string">"VERBOSE"</span>, <span class="string">"DEBUG"</span>, <span class="string">"MAX"</span>]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h3">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <h3>MessageEmitter</h3>
+<p>This class is the base for anything that wants to produce messages to be logged.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Observatory</span>.<span class="title">MessageEmitter</span></span>
+  _loggers = [] <span class="comment"># array of subscribing loggers</span>
+
+  _getLoggers: -&gt; <span class="property">@_loggers</span>
+  constructor: (<span class="property">@name</span>)-&gt; <span class="property">@_loggers</span> = []</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>add new logger to listen to messages</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  subscribeLogger: (logger)-&gt;
+    <span class="property">@_loggers</span>.push logger</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>remove logger from the listeners</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  unsubscribeLogger: (logger)-&gt;
+    <span class="property">@_loggers</span> = _.without <span class="property">@_loggers</span>, logger</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Translates message to be logged to all subscribed loggers.
+<a href="http://example.net/">Logger</a> has to respond to <code>addMessage(msg)</code> call.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  emitMessage: (message)-&gt;
+    l.addMessage message <span class="keyword">for</span> l <span class="keyword">in</span> <span class="property">@_loggers</span>
+    <span class="literal">true</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h3">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <h3>Logger</h3>
+<p>Logger listens to messages and processes them, one by one or in batches.
+It also checks if the Emitters generate messages in the correct format described below.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Observatory</span>.<span class="title">Logger</span></span>
+  messageBuffer = []</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p><code>@name</code> is a module name
+<code>func</code> is a function to process and log every object in the buffer???</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  constructor: (<span class="property">@name</span>, func)-&gt;
+    <span class="property">@messageBuffer</span> = []
+    <span class="property">@func</span> = func</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p><code>messageAcceptable</code> verifies that Emitters give messages in the format that
+can be recognized by this logger. At the very minimum, we are checking for
+timestamp, severity, client / server and either text or html formatted message to log.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  messageAcceptable: (m)-&gt;
+    <span class="keyword">return</span> (m.timestamp? <span class="keyword">and</span> m.severity? <span class="keyword">and</span> m.isServer? <span class="keyword">and</span> (m.textMessage? <span class="keyword">or</span> m.htmlMessage?) )</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p><code>addMessage</code> is the listening method that takes messages from Emitters</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  addMessage: (message)-&gt;
+    <span class="keyword">throw</span> <span class="keyword">new</span> Error <span class="string">"Unacceptable message format in logger: <span class="subst">#{@name}</span>"</span> <span class="keyword">if</span> <span class="keyword">not</span> <span class="property">@messageAcceptable</span> message
+    <span class="property">@messageBuffer</span>.push message</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>receives a function that formats &amp; logs each object in the buffer in whatever way we need
+and clears the buffer in the end
+???</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  processBuffer: (func)-&gt;
+    <span class="keyword">return</span> <span class="keyword">unless</span> <span class="property">@messageBuffer</span>.length &gt; <span class="number">0</span>
+    f = <span class="keyword">if</span> func? <span class="keyword">then</span> func <span class="keyword">else</span> <span class="property">@func</span>
+    f obj <span class="keyword">for</span> obj <span class="keyword">in</span> <span class="property">@messageBuffer</span>
+    <span class="property">@messageBuffer</span> = []</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p><a name="abcde"/></p>
+<h3>GenericEmitter</h3>
+<p>Implements typical logging functionality to be used inside an app - log messages with various severity levels.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="class"><span class="keyword">class</span> <span class="title">Observatory</span>.<span class="title">GenericEmitter</span> <span class="keyword">extends</span> <span class="title">Observatory</span>.<span class="title">MessageEmitter</span></span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>Creating a named emitter with maximum severity of the messages to emit equal to <code>maxSeverity</code></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  constructor: (name, maxSeverity)-&gt;
+    <span class="property">@maxSeverity</span> = maxSeverity
+    <span class="keyword">super</span> name</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>some dynamic js magic - defining different severity method aliases programmatically to be DRY:</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">for</span> m,i <span class="keyword">in</span> [<span class="string">'fatal'</span>,<span class="string">'error'</span>,<span class="string">'warn'</span>,<span class="string">'info'</span>,<span class="string">'verbose'</span>,<span class="string">'debug'</span>,<span class="string">'insaneVerbose'</span>]
+      <span class="property">@m</span> = (message, module, obj)-&gt; <span class="property">@_emitWithSeverity</span> i, message, obj, module</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-16">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-16">&#182;</a>
+              </div>
+              <p>Low-level emitting method that formats message and emits it</p>
+<p><code>severity</code> - level with wich to emit a message. Won&#39;t be emitted if higher than <code>@maxSeverity</code></p>
+<p><code>message</code> - text message to include into the full log message to be passed to loggers</p>
+<p><code>module</code> - optional module name. If the emitter is named, its&#39; name will be used instead in any case.</p>
+<p><code>obj</code> - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to <code>error</code></p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  _emitWithSeverity: (severity, message, obj, module)-&gt;
+
+console.log Observatory
+(exports ? <span class="keyword">this</span>).Observatory = Observatory</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>

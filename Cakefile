@@ -12,3 +12,9 @@ task "test", "Run unit tests", ->
     #throw err if err
     console.log stdout + stderr
 
+task "docs", "Generate API docs", ->
+  exec "docco src/*", (err, stdout, stderr)->
+    throw err if err
+    console.log stdout + stderr
+
+
