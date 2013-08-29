@@ -2,7 +2,7 @@ chai = require 'chai'
 should = chai.should()
 #expect = chai.expect
 Observatory = (require '../src/Observatory.coffee').Observatory
-{MessageEmitter, GenericEmitter, LOGLEVEL} = Observatory
+{MessageEmitter, GenericEmitter, Logger, LOGLEVEL} = Observatory
 #console.log MessageEmitter
 
 Spy =
@@ -32,19 +32,27 @@ describe 'Observatory - centralized code and functions', ->
       NAMES: ["FATAL", "ERROR", "WARNING", "INFO", "VERBOSE", "DEBUG", "MAX"]
     Observatory.maxSeverity.should.equal Observatory.LOGLEVEL.INFO
 
-  it 'should allow logger subscription',->
-    Observatory.subscribeLogger logger1
-    Observatory.subscribeLogger logger2
-    Observatory._loggers.length.should.equal 2
-    Observatory._loggers[0].should.equal logger1
-    Observatory._loggers[1].should.equal logger2
+  describe 'subscribeLogger()',->
+    it 'should allow logger subscription',->
+      Observatory.subscribeLogger logger1
+      Observatory.subscribeLogger logger2
+      Observatory._loggers.length.should.equal 2
+      Observatory._loggers[0].should.equal logger1
+      Observatory._loggers[1].should.equal logger2
 
-  it 'should unsubscribe loggers', ->
-    Observatory.unsubscribeLogger logger1
-    Observatory._loggers.length.should.equal 1
-    Observatory._loggers[0].should.equal logger2
-    Observatory.unsubscribeLogger logger2
-    Observatory._loggers.should.be.empty
+  describe 'unsubscribeLogger()',->
+    it 'should unsubscribe loggers', ->
+      Observatory.unsubscribeLogger logger1
+      Observatory._loggers.length.should.equal 1
+      Observatory._loggers[0].should.equal logger2
+      Observatory.unsubscribeLogger logger2
+      Observatory._loggers.should.be.empty
+
+  describe 'reset()',->
+    it 'should clean up subscribed loggers and reset settings to the defaults',->
+      Observatory.reset()
+      Observatory.maxSeverity.should.equal LOGLEVEL.INFO
+      Observatory.getLoggers().should.be.empty
 
   describe 'Formatters - functions that take arbitrary json and format it into message to log', ->
     describe 'basicFormatter',->
@@ -133,4 +141,32 @@ describe 'Observatory - centralized code and functions', ->
         should.not.exist m.object
         m.module.should.equal 'module'
         m.textMessage.should.equal 'test message'
+
+  describe 'Logger - base class for all loggers that listen to messages and output them somewhere',->
+    l = new Logger 'logger'
+    it 'should be created with defaults',->
+      l.name.should.equal 'logger'
+      l.useBuffer.should.be.false
+      l.interval.should.equal 3000
+    describe 'addMessage(message)',->
+      it 'should not accept malformed messages',->
+        (-> l.addMessage(null)).should.throw Error
+      it 'should accept well-formed messages but throw error when logging',->
+        goodm = timestamp: new Date, severity: 0, textMessage: 'error', isServer: true
+        l.messageAcceptable(goodm).should.be.true
+        (-> l.addMessage(goodm)).should.throw Error
+    describe 'addMessage(message) with buffer',->
+      l1 = new Logger 'logger1', true
+      goodm = timestamp: new Date, severity: 0, textMessage: 'error', isServer: true
+      it 'should add well-formed message to the buffer',->
+        l1.addMessage goodm
+        l1.messageBuffer.length.should.equal 1
+      it 'should not add malformed message to the buffer',->
+        (-> l1.addMessage(null)).should.throw Error
+        l1.messageBuffer.length.should.equal 1
+      describe 'processBuffer()',->
+        it 'should throw exception as log() must be overriden',->
+          (-> l1.processBuffer()).should.throw Error
+
+
 
