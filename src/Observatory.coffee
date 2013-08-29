@@ -7,7 +7,7 @@
 # Below is the full API documentation, useful if you want to extend the framework. If you just want to
 # jump to usage, start reading with [Generic Emitter](#abcde).
 
-_ = require 'underscore'
+_ = require 'underscore' if require?
 
 # ### Constants and common definitions
 Observatory =
@@ -27,6 +27,22 @@ Observatory =
   # Check if we are run on server or client.
   # NOTE! To be overriden for Meteor based implementations!
   isServer: -> not (typeof window isnt "undefined" and window.document)
+
+  # Maximum system-wide severity - info by default
+  maxSeverity: 3
+
+  # formatters - functions that take arbitrary json and format it into a message that
+  # loggers can accept
+  formatters:
+    basicFormatter: (options)->
+        timestamp: new Date
+        severity: options.severity
+        textMessage: options.message
+        # note that it's a function that gets passed around so `this` will be what we need
+        module: options.module # should the priority be reversed?
+        object: options.obj
+        isServer: Observatory.isServer()
+
 
   # array of system-wide subscribing loggers
   _loggers: []
@@ -112,19 +128,15 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
     if formatter? and typeof formatter is 'function'
       @formatter = formatter
     else
-      @formatter = (options)->
-        msg =
-          timestamp: new Date
-          severity: options.severity
-          textMessage: options.message
-          module: if @name then @name else options.module # should the priority be reversed?
-          object: options.obj
-          isServer: Observatory.isServer()
+      @formatter = Observatory.formatters.basicFormatter
 
     super name
-    # some dynamic js magic - defining different severity method aliases programmatically to be DRY:
+    # some dynamic js magic - defining different severity method aliases programmatically to be DRY.
+    # TODO: need to keep in mind bind() doesn't work in IE8 and below, but there's a
+    # [script to fix this](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind#Compatibility)
     for m,i in ['fatal','error','warn','info','verbose','debug','insaneVerbose']
-      @[m] = (message, module, obj)-> @_emitWithSeverity severity: i, message: message, obj: obj, module: module
+      @[m] = @_emitWithSeverity.bind this, i
+
 
   # Low-level emitting method that formats message and emits it
   #
@@ -132,11 +144,19 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
   # * `message` - text message to include into the full log message to be passed to loggers
   # * `module` - optional module name. If the emitter is named, its' name will be used instead in any case.
   # * `obj` - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to `error`
-  _emitWithSeverity: (options)->
-    return false if not options.severity? or options.severity > @maxSeverity
+  _emitWithSeverity: (severity, message, obj, module)->
+    return false if not severity? or severity > @maxSeverity
+    if typeof message is 'object'
+      module = obj
+      obj = message
+      message = JSON.stringify obj
+    if typeof obj is 'string'
+      module = obj
+      obj = null
+
+    options = severity: severity, message: message, obj: obj, module: module ? @name # explicit module overrides name
     @emitMessage @formatter(options)
-    true
 
 
-console.log Observatory
+
 (exports ? this).Observatory = Observatory
