@@ -84,8 +84,24 @@ jump to usage, start reading with <a href="#abcde">Generic Emitter</a>.</p>
         <li id="section-4">
             <div class="annotation">
               
-              <div class="pilwrap for-h3">
+              <div class="pilwrap ">
                 <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Check if we are run on server or client.
+NOTE! To be overriden for Meteor based implementations!</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  isServer: -&gt; <span class="keyword">not</span> (<span class="keyword">typeof</span> window <span class="keyword">isnt</span> <span class="string">"undefined"</span> <span class="keyword">and</span> window.document)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap for-h3">
+                <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
               <h3>MessageEmitter</h3>
 <p>This class is the base for anything that wants to produce messages to be logged.</p>
@@ -101,11 +117,11 @@ jump to usage, start reading with <a href="#abcde">Generic Emitter</a>.</p>
         </li>
         
         
-        <li id="section-5">
+        <li id="section-6">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-5">&#182;</a>
+                <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
               <p>add new logger to listen to messages</p>
 
@@ -117,11 +133,11 @@ jump to usage, start reading with <a href="#abcde">Generic Emitter</a>.</p>
         </li>
         
         
-        <li id="section-6">
+        <li id="section-7">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-6">&#182;</a>
+                <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <p>remove logger from the listeners</p>
 
@@ -133,11 +149,11 @@ jump to usage, start reading with <a href="#abcde">Generic Emitter</a>.</p>
         </li>
         
         
-        <li id="section-7">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
+                <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <p>Translates message to be logged to all subscribed loggers.
 <a href="http://example.net/">Logger</a> has to respond to <code>addMessage(msg)</code> call.</p>
@@ -151,11 +167,11 @@ jump to usage, start reading with <a href="#abcde">Generic Emitter</a>.</p>
         </li>
         
         
-        <li id="section-8">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="pilwrap for-h3">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <h3>Logger</h3>
 <p>Logger listens to messages and processes them, one by one or in batches.
@@ -169,11 +185,11 @@ It also checks if the Emitters generate messages in the correct format described
         </li>
         
         
-        <li id="section-9">
+        <li id="section-10">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
+                <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
               <p><code>@name</code> is a module name
 <code>func</code> is a function to process and log every object in the buffer???</p>
@@ -187,11 +203,11 @@ It also checks if the Emitters generate messages in the correct format described
         </li>
         
         
-        <li id="section-10">
+        <li id="section-11">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-10">&#182;</a>
+                <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
               <p><code>messageAcceptable</code> verifies that Emitters give messages in the format that
 can be recognized by this logger. At the very minimum, we are checking for
@@ -205,11 +221,11 @@ timestamp, severity, client / server and either text or html formatted message t
         </li>
         
         
-        <li id="section-11">
+        <li id="section-12">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-11">&#182;</a>
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <p><code>addMessage</code> is the listening method that takes messages from Emitters</p>
 
@@ -222,11 +238,11 @@ timestamp, severity, client / server and either text or html formatted message t
         </li>
         
         
-        <li id="section-12">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <p>receives a function that formats &amp; logs each object in the buffer in whatever way we need
 and clears the buffer in the end
@@ -243,11 +259,11 @@ and clears the buffer in the end
         </li>
         
         
-        <li id="section-13">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <p><a name="abcde"/></p>
 <h3>GenericEmitter</h3>
@@ -260,11 +276,11 @@ and clears the buffer in the end
         </li>
         
         
-        <li id="section-14">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <p>Creating a named emitter with maximum severity of the messages to emit equal to <code>maxSeverity</code></p>
 
@@ -277,33 +293,35 @@ and clears the buffer in the end
         </li>
         
         
-        <li id="section-15">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
-              </div>
-              <p>some dynamic js magic - defining different severity method aliases programmatically to be DRY:</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>    <span class="keyword">for</span> m,i <span class="keyword">in</span> [<span class="string">'fatal'</span>,<span class="string">'error'</span>,<span class="string">'warn'</span>,<span class="string">'info'</span>,<span class="string">'verbose'</span>,<span class="string">'debug'</span>,<span class="string">'insaneVerbose'</span>]
-      <span class="property">@m</span> = (message, module, obj)-&gt; <span class="property">@_emitWithSeverity</span> i, message, obj, module</pre></div></div>
-            
-        </li>
-        
-        
         <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
+              <p>some dynamic js magic - defining different severity method aliases programmatically to be DRY:</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="keyword">for</span> m,i <span class="keyword">in</span> [<span class="string">'fatal'</span>,<span class="string">'error'</span>,<span class="string">'warn'</span>,<span class="string">'info'</span>,<span class="string">'verbose'</span>,<span class="string">'debug'</span>,<span class="string">'insaneVerbose'</span>]
+      @[m] = (message, module, obj)-&gt; <span class="property">@_emitWithSeverity</span> i, message, obj, module</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-17">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-17">&#182;</a>
+              </div>
               <p>Low-level emitting method that formats message and emits it</p>
-<p><code>severity</code> - level with wich to emit a message. Won&#39;t be emitted if higher than <code>@maxSeverity</code></p>
-<p><code>message</code> - text message to include into the full log message to be passed to loggers</p>
-<p><code>module</code> - optional module name. If the emitter is named, its&#39; name will be used instead in any case.</p>
-<p><code>obj</code> - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to <code>error</code></p>
+<ul>
+<li><code>severity</code> - level with wich to emit a message. Won&#39;t be emitted if higher than <code>@maxSeverity</code></li>
+<li><code>message</code> - text message to include into the full log message to be passed to loggers</li>
+<li><code>module</code> - optional module name. If the emitter is named, its&#39; name will be used instead in any case.</li>
+<li><code>obj</code> - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to <code>error</code></li>
+</ul>
 
             </div>
             

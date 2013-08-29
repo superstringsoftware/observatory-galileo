@@ -24,6 +24,10 @@ Observatory =
     MAX: 6
     NAMES: ["FATAL", "ERROR", "WARNING", "INFO", "VERBOSE", "DEBUG", "MAX"]
 
+  # Check if we are run on server or client.
+  # NOTE! To be overriden for Meteor based implementations!
+  isServer: -> not (typeof window isnt "undefined" and window.document)
+
 # ### MessageEmitter
 # This class is the base for anything that wants to produce messages to be logged.
 class Observatory.MessageEmitter
@@ -80,28 +84,41 @@ class Observatory.Logger
 
 # <a name="abcde"/>
 # ### GenericEmitter
-#
 # Implements typical logging functionality to be used inside an app - log messages with various severity levels.
-#
+
 class Observatory.GenericEmitter extends Observatory.MessageEmitter
+
   # Creating a named emitter with maximum severity of the messages to emit equal to `maxSeverity`
-  constructor: (name, maxSeverity)->
+  # and `formatter` as a formatting function. This provides flexibility on how the message to be passed on to
+  # loggers is formed.
+  constructor: (name, maxSeverity, formatter)->
     @maxSeverity = maxSeverity
+    if formatter? and typeof formatter is 'function'
+      @formatter = formatter
+    else
+      @formatter = (options)->
+        msg =
+          timestamp: new Date
+          severity: options.severity
+          textMessage: options.message
+          module: if @name then @name else options.module # should the priority be reversed?
+          object: options.obj
+          isServer: Observatory.isServer()
+
     super name
     # some dynamic js magic - defining different severity method aliases programmatically to be DRY:
     for m,i in ['fatal','error','warn','info','verbose','debug','insaneVerbose']
-      @[m] = (message, module, obj)-> @_emitWithSeverity i, message, obj, module
+      @[m] = (message, module, obj)-> @_emitWithSeverity severity: i, message: message, obj: obj, module: module
 
   # Low-level emitting method that formats message and emits it
   #
-  # `severity` - level with wich to emit a message. Won't be emitted if higher than `@maxSeverity`
-  #
-  # `message` - text message to include into the full log message to be passed to loggers
-  #
-  # `module` - optional module name. If the emitter is named, its' name will be used instead in any case.
-  #
-  # `obj` - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to `error`
-  _emitWithSeverity: (severity, message, obj, module)->
+  # * `severity` - level with wich to emit a message. Won't be emitted if higher than `@maxSeverity`
+  # * `message` - text message to include into the full log message to be passed to loggers
+  # * `module` - optional module name. If the emitter is named, its' name will be used instead in any case.
+  # * `obj` - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to `error`
+  _emitWithSeverity: (options)->
+    return if not options.severity? or options.severity > @maxSeverity
+    @emitMessage @formatter(options)
 
 console.log Observatory
 (exports ? this).Observatory = Observatory
