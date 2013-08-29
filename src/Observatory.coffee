@@ -28,6 +28,18 @@ Observatory =
   # NOTE! To be overriden for Meteor based implementations!
   isServer: -> not (typeof window isnt "undefined" and window.document)
 
+  # array of system-wide subscribing loggers
+  _loggers: []
+  # get all currently listening system-wide loggers
+  getLoggers: -> @_loggers
+  # add new logger to listen to messages
+  subscribeLogger: (logger)->
+    @_loggers.push logger
+  # remove logger from the listeners
+  unsubscribeLogger: (logger)->
+    @_loggers = _.without @_loggers, logger
+
+
 # ### MessageEmitter
 # This class is the base for anything that wants to produce messages to be logged.
 class Observatory.MessageEmitter
@@ -45,10 +57,13 @@ class Observatory.MessageEmitter
     @_loggers = _.without @_loggers, logger
 
   # Translates message to be logged to all subscribed loggers.
-  # [Logger](http://example.net/) has to respond to `addMessage(msg)` call.
+  # `logger` has to respond to `addMessage(msg)` call.
+  # Normally, only system-wide loggers are used, subscription for specific emitters is to provide
+  # finer-grained control.
   emitMessage: (message)->
-    l.addMessage message for l in @_loggers
-    true
+    l.addMessage message for l in Observatory.getLoggers()
+    l.addMessage message for l in @_loggers if @_loggers.length > 0
+    message
 
 # ### Logger
 # Logger listens to messages and processes them, one by one or in batches.
@@ -90,7 +105,8 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
 
   # Creating a named emitter with maximum severity of the messages to emit equal to `maxSeverity`
   # and `formatter` as a formatting function. This provides flexibility on how the message to be passed on to
-  # loggers is formed.
+  # loggers is formed. E.g., here it's given a basic format, when we'll use Meteor we'll provide a more
+  # advanced formatter that will set userId, IP address etc.
   constructor: (name, maxSeverity, formatter)->
     @maxSeverity = maxSeverity
     if formatter? and typeof formatter is 'function'
@@ -117,8 +133,10 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
   # * `module` - optional module name. If the emitter is named, its' name will be used instead in any case.
   # * `obj` - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to `error`
   _emitWithSeverity: (options)->
-    return if not options.severity? or options.severity > @maxSeverity
+    return false if not options.severity? or options.severity > @maxSeverity
     @emitMessage @formatter(options)
+    true
+
 
 console.log Observatory
 (exports ? this).Observatory = Observatory
