@@ -8,7 +8,7 @@ task "compile", "Compile library", ->
     console.log stdout + stderr
 
 task "test", "Run unit tests", ->
-  exec "mocha -R spec --colors --compilers coffee:coffee-script test/*", (err, stdout, stderr)->
+  exec "mocha --colors --compilers coffee:coffee-script test/*", (err, stdout, stderr)->
     #throw err if err
     console.log stdout + stderr
 

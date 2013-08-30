@@ -25,15 +25,36 @@ _.extend Observatory,
     MAX: 6
     NAMES: ["FATAL", "ERROR", "WARNING", "INFO", "VERBOSE", "DEBUG", "MAX"]
 
+  settings:
+    maxSeverity: 3
+    printToConsole: true
+
+  # Initializing the system - creating loggers, subscribing etc
+  # Currently creates 1 ConsoleLogger and subscribes it system-wide.
+  # Also initializes default logger (Generic Emitter).
+  # TODO: add tests and settings format
+  initialize: (s)->
+    @_loggers = []
+    if s?
+      @settings.maxSeverity = if s.logLevel? then @LOGLEVEL[s.logLevel] else 3
+      @settings.printToConsole = s.printToConsole ? true
+
+    @_consoleLogger = new Observatory.ConsoleLogger 'default'
+    @subscribeLogger @_consoleLogger
+
+    @_defaultEmitter = new Observatory.GenericEmitter 'default'
+
+  # Returns default logger to use in the app via warn(), debug() etc calls
+  getDefaultLogger: -> @_defaultEmitter
+
+
   # Check if we are run on server or client.
   # NOTE! To be overriden for Meteor based implementations!
   isServer: -> not (typeof window isnt "undefined" and window.document)
 
-  # Maximum system-wide severity - info by default
-  maxSeverity: 3
-
-  # formatters - functions that take arbitrary json and format it into a message that
-  # loggers can accept
+  # Formatters - functions that take arbitrary json and format it into a message that
+  # loggers can accept. Formatters can be chained - will be useful when implementing Meteor
+  # related stuff.
   formatters:
     basicFormatter: (options)->
         timestamp: new Date
@@ -48,7 +69,7 @@ _.extend Observatory,
   # e.g., adding ANSI colors or html markup.
   viewFormatters:
     _convertDate: (timestamp)->
-      timestamp.getUTCDate() + '/' + timestamp.getUTCMonth() + '/'+timestamp.getUTCFullYear()
+      timestamp.getUTCDate() + '/' + (timestamp.getUTCMonth()+1) + '/'+timestamp.getUTCFullYear()
     _convertTime: (timestamp, ms=true)->
       ts = timestamp.getUTCHours()+ ':' + timestamp.getUTCMinutes() + ':' + timestamp.getUTCSeconds()
       ts += '.' + timestamp.getUTCMilliseconds() if ms
@@ -59,9 +80,10 @@ _.extend Observatory,
       t = Observatory.viewFormatters
       ts = t._ps(t._convertDate(o.timestamp)) + t._ps(t._convertTime(o.timestamp))
       full_message = ts + if o.isServer then "[SERVER]" else "[CLIENT]"
-      full_message+= if o.module then @_ps o.module else "[]"
+      full_message+= if o.module then t._ps o.module else "[]"
       full_message+= t._ps(Observatory.LOGLEVEL.NAMES[o.severity]) #TODO: RANGE CHECK!!!
       full_message+= " #{o.textMessage}"
+      full_message+= " | #{JSON.stringify(o.object)}" if o.object?
       full_message
 
 
@@ -75,10 +97,6 @@ _.extend Observatory,
   # remove logger from the listeners
   unsubscribeLogger: (logger)->
     @_loggers = _.without @_loggers, logger
-  # reset - resets Observatory to the default state
-  reset: ->
-    @_loggers = []
-    @maxSeverity = 3
 
 
 # ### MessageEmitter
@@ -117,6 +135,7 @@ class Observatory.Logger
   # * `@interval` - if using buffer, how often we should process it.
   # TODO: figure out how to use different interval-setting functions in pure js and Meteor.
   # TODO: actual interval setup in the constructor
+  # TODO: tests for arguments shifting!!!
   constructor: (@name, @formatter = Observatory.viewFormatters.basicConsole, @useBuffer = false, @interval = 3000)->
     if typeof formatter is 'boolean'
       @interval = @useBuffer
@@ -147,7 +166,8 @@ class Observatory.Logger
     @log obj for obj in @messageBuffer
     @messageBuffer = []
 
-# <a name="abcde"/>
+# <a name="abcde"></a>
+#
 # ### GenericEmitter
 # Implements typical logging functionality to be used inside an app - log messages with various severity levels.
 
@@ -170,6 +190,11 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
     # [script to fix this](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind#Compatibility)
     for m,i in ['fatal','error','warn','info','verbose','debug','insaneVerbose']
       @[m] = @_emitWithSeverity.bind this, i
+
+  # Trace a error - format stacktrace nicely and output with ERROR level
+  trace: (error, module)->
+    message = error.stack ? error
+    @_emitWithSeverity Observatory.LOGLEVEL.ERROR, message, module
 
 
   # Low-level emitting method that formats message and emits it

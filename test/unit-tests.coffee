@@ -30,7 +30,7 @@ describe 'Observatory - centralized code and functions', ->
       DEBUG: 5
       MAX: 6
       NAMES: ["FATAL", "ERROR", "WARNING", "INFO", "VERBOSE", "DEBUG", "MAX"]
-    Observatory.maxSeverity.should.equal Observatory.LOGLEVEL.INFO
+
 
   describe 'subscribeLogger()',->
     it 'should allow logger subscription',->
@@ -47,12 +47,6 @@ describe 'Observatory - centralized code and functions', ->
       Observatory._loggers[0].should.equal logger2
       Observatory.unsubscribeLogger logger2
       Observatory._loggers.should.be.empty
-
-  describe 'reset()',->
-    it 'should clean up subscribed loggers and reset settings to the defaults',->
-      Observatory.reset()
-      Observatory.maxSeverity.should.equal LOGLEVEL.INFO
-      Observatory.getLoggers().should.be.empty
 
   describe 'Formatters - functions that take arbitrary json and format it into message to log', ->
     describe 'basicFormatter',->
@@ -177,16 +171,39 @@ describe 'Observatory - centralized code and functions', ->
         (-> l.addMessage(null)).should.throw Error
       it 'should accept well-formed messages and print it out',->
         dt = new Date 2013,5,5
-        goodm = timestamp: dt, severity: 0, textMessage: 'error', isServer: true
+        goodm = timestamp: dt, severity: 0, textMessage: 'error', isServer: true, object: {a: 'a', b: 1}
         l.messageAcceptable(goodm).should.be.true
         # ugly hack for spying on the console
         cc = console.log
         tmp = ''
         console.log = (m)-> tmp = m
         (-> l.addMessage(goodm)).should.not.throw Error
-        tmp.should.equal '[4/5/2013][22:0:0.0][SERVER][][FATAL] error'
+        tmp.should.equal '[4/6/2013][22:0:0.0][SERVER][][FATAL] error | {"a":"a","b":1}'
         console.log = cc
-        
+
+
+
+  describe '============ Some Integration Tests =============',->
+    describe 'Observatory.initialize()',->
+      it 'should setup basic logging infrastructure: 1 console logger, default emitter, settings',->
+        Observatory.initialize logLevel: 'DEBUG'
+        Observatory.settings.maxSeverity.should.equal LOGLEVEL.DEBUG
+        Observatory.getLoggers().length.should.equal 1
+        dl = Observatory.getDefaultLogger()
+        dl.should.be.an.instanceOf GenericEmitter
+        describe 'Now testing how messages from emitter reach the logger',->
+          it 'should print stuff out - look at the screen!',->
+            dl.info 'Message is this'
+            b = a: 'a', b: 1, d: new Date
+            dl.verbose 'too much words', b
+            dl.debug 'Debug message', 'my module'
+            try
+              #Observatory.notExistingMethod()
+              throw new Error 'Test Error'
+            catch e
+              dl.trace e, 'tests'
+
+
 
 
 
