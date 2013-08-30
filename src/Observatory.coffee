@@ -10,8 +10,9 @@
 _ = require 'underscore' if require?
 
 # ### Constants and common definitions
-Observatory =
+Observatory = Observatory ? {}
 
+_.extend Observatory,
   # Log level (severity) definitions
   LOGLEVEL:
     SILENT: -1
@@ -42,6 +43,26 @@ Observatory =
         module: options.module # should the priority be reversed?
         object: options.obj
         isServer: Observatory.isServer()
+
+  # View formatters take a message accepted by loggers and further format it for nice output,
+  # e.g., adding ANSI colors or html markup.
+  viewFormatters:
+    _convertDate: (timestamp)->
+      timestamp.getUTCDate() + '/' + timestamp.getUTCMonth() + '/'+timestamp.getUTCFullYear()
+    _convertTime: (timestamp, ms=true)->
+      ts = timestamp.getUTCHours()+ ':' + timestamp.getUTCMinutes() + ':' + timestamp.getUTCSeconds()
+      ts += '.' + timestamp.getUTCMilliseconds() if ms
+      ts
+    _ps: (s)-> '['+s+']'
+
+    basicConsole: (o)->
+      t = Observatory.viewFormatters
+      ts = t._ps(t._convertDate(o.timestamp)) + t._ps(t._convertTime(o.timestamp))
+      full_message = ts + if o.isServer then "[SERVER]" else "[CLIENT]"
+      full_message+= if o.module then @_ps o.module else "[]"
+      full_message+= t._ps(Observatory.LOGLEVEL.NAMES[o.severity]) #TODO: RANGE CHECK!!!
+      full_message+= " #{o.textMessage}"
+      full_message
 
 
   # array of system-wide subscribing loggers
@@ -96,7 +117,11 @@ class Observatory.Logger
   # * `@interval` - if using buffer, how often we should process it.
   # TODO: figure out how to use different interval-setting functions in pure js and Meteor.
   # TODO: actual interval setup in the constructor
-  constructor: (@name, @useBuffer = false, @interval = 3000)->
+  constructor: (@name, @formatter = Observatory.viewFormatters.basicConsole, @useBuffer = false, @interval = 3000)->
+    if typeof formatter is 'boolean'
+      @interval = @useBuffer
+      @useBuffer = @formatter
+      @formatter = Observatory.viewFormatters.basicConsole
     @messageBuffer = []
 
   # `messageAcceptable` verifies that Emitters give messages in the format that
@@ -166,6 +191,11 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
     options = severity: severity, message: message, obj: obj, module: module ? @name # explicit module overrides name
     @emitMessage @formatter(options)
 
+# ### ConsoleLogger
+# Basic logger to the console, without any fancy stuff
+class Observatory.ConsoleLogger extends Observatory.Logger
 
+  # Simply redefining log() to output the message to the console
+  log: (m)-> console.log @formatter m
 
 (exports ? this).Observatory = Observatory

@@ -2,7 +2,7 @@ chai = require 'chai'
 should = chai.should()
 #expect = chai.expect
 Observatory = (require '../src/Observatory.coffee').Observatory
-{MessageEmitter, GenericEmitter, Logger, LOGLEVEL} = Observatory
+{MessageEmitter, GenericEmitter, Logger, ConsoleLogger, LOGLEVEL} = Observatory
 #console.log MessageEmitter
 
 Spy =
@@ -148,6 +148,7 @@ describe 'Observatory - centralized code and functions', ->
       l.name.should.equal 'logger'
       l.useBuffer.should.be.false
       l.interval.should.equal 3000
+      l.formatter.should.equal Observatory.viewFormatters.basicConsole
     describe 'addMessage(message)',->
       it 'should not accept malformed messages',->
         (-> l.addMessage(null)).should.throw Error
@@ -167,6 +168,27 @@ describe 'Observatory - centralized code and functions', ->
       describe 'processBuffer()',->
         it 'should throw exception as log() must be overriden',->
           (-> l1.processBuffer()).should.throw Error
+
+
+  describe 'ConsoleLogger - basic logger to the console',->
+    l = new ConsoleLogger
+    describe 'addMessage(message)',->
+      it 'should not accept malformed messages',->
+        (-> l.addMessage(null)).should.throw Error
+      it 'should accept well-formed messages and print it out',->
+        dt = new Date 2013,5,5
+        goodm = timestamp: dt, severity: 0, textMessage: 'error', isServer: true
+        l.messageAcceptable(goodm).should.be.true
+        # ugly hack for spying on the console
+        cc = console.log
+        tmp = ''
+        console.log = (m)-> tmp = m
+        (-> l.addMessage(goodm)).should.not.throw Error
+        tmp.should.equal '[4/5/2013][22:0:0.0][SERVER][][FATAL] error'
+        console.log = cc
+        
+
+
 
 
 
