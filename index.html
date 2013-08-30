@@ -17,7 +17,7 @@
     <header>
       <div class="container">
         <h1>Observatory: Galileo</h1>
-        <h2>nodejs / coffeescript  logging framework, foundation for the Observatory suite for Meteor, but can be used standalone.</h2>
+        <h2>Flexible and powerful nodejs / client logging framework, foundation for the <a href="http://observatoryjs.com">Observatory suite</a></h2>
 
         <section id="downloads">
           <a href="https://github.com/superstringsoftware/observatory-galileo/zipball/master" class="btn">Download as .zip</a>
@@ -29,9 +29,40 @@
 
     <div class="container">
       <section id="main_content">
-        <p>Base Observatory classes that do not depend on <a href="http://meteor.com">Meteor</a> and implement a versatile and powerful logging framework for javascript. Written in coffeescript.</p>
+<p>Feel free to browse Detailed API docs below and do checkout full <a href="http://observatoryjs.com">Observatory Suite!</a>
+    It's all live on the web there ;)
+</p>
 
-<p>Feel free to browse Detailed API docs below and do checkout full <a href="http://observatoryjs.com">Observatory Suite!</a></p>
+          <div class="annotation">
+
+              <div class="pilwrap for-h2">
+                  <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <h2>Observatory: Galileo</h2>
+              <p>is a nodejs / client logging framework with flexible and powerful architecture, written in coffeescript.
+                  It was developed as a basis for <a href="http://observatoryjs.com">Observatory Logging &amp; Monitoring Suite</a>
+                  but can be used standalone independent of <a href="http://meteor.com">Meteor</a>.
+                  Although you should <em>really</em> try Meteor. You&#39;ll love it, we promise.</p>
+
+              <h3>Basic framework architecture notes</h3>
+              <ul>
+                  <li><code>MessageEmitters</code> emit messages - either from explicit calls to <code>debug()</code>
+                      or similar in the standard versatile <code>Toolbox</code> logger and profiler, or by in turn listening or
+                      monitoring some other provider: e.g., http connect module, external log service etc. Emitters use formatters...
+                      --&gt;</li>
+                  <li><code>Observatory.formatters</code> to form or transform messages into predefined json format that is acceptably by... --&gt;</li>
+                  <li><code>Loggers</code> receive formatted json messages from emitters and either buffer them or process immediately,
+                      by applying further output formatting... --&gt</li>
+                  <li><code>Observatory.viewFormatters</code> transform json from incoming messages - e.g., adding ANSI colors or
+                      html tags - and output them into different out devices (depending on the logger) - console, mongo collection
+                      etc.</li>
+              </ul>
+
+
+
+
+          </div>
+
 
       </section>
 
@@ -41,31 +72,10 @@
 
 
 
-    <div id="container" style="border-top: 1px dashed #b5e853; margin-top: 60px;">
+    <div id="container" style="border-top: 1px dashed #b5e853; margin-top: 80px; padding-top: 40px;">
     <div id="background"></div>
 
     <ul class="sections">
-
-    <li id="section-1">
-        <div class="annotation">
-
-            <div class="pilwrap for-h2">
-                <a class="pilcrow" href="#section-1">&#182;</a>
-            </div>
-            <h2>Observatory</h2>
-            <p>Observatory-galileo is a nodejs / client logging framework with flexible architecture.
-                It was developed as a basis for <a href="http://observatoryjs.com">Observatory Logging &amp; Monitoring Suite</a>
-                but can be used standalone independent of <a href="http://meteor.com">Meteor</a>.
-                Although you should <em>really</em> try Meteor. You&#39;ll love it, we promise :)</p>
-            <p>Below is the full API documentation, useful if you want to extend the framework. If you just want to
-                jump to usage, start reading with <a href="#abcde">Generic Emitter</a>.</p>
-
-        </div>
-
-        <div class="content"><div class='highlight'><pre>_ = require <span class="string">'underscore'</span> <span class="keyword">if</span> require?</pre></div></div>
-
-    </li>
-
 
     <li id="section-2">
         <div class="annotation">
@@ -77,7 +87,9 @@
 
         </div>
 
-        <div class="content"><div class='highlight'><pre>Observatory = Observatory ? {}
+        <div class="content"><div class='highlight'>
+            <pre>_ = require <span class="string">'underscore'</span> <span class="keyword">if</span> require?
+Observatory = Observatory ? {}
 
 _.extend Observatory,</pre></div></div>
 
