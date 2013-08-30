@@ -78,7 +78,11 @@ _.extend Observatory,</pre></div></div>
     VERBOSE: <span class="number">4</span>
     DEBUG: <span class="number">5</span>
     MAX: <span class="number">6</span>
-    NAMES: [<span class="string">"FATAL"</span>, <span class="string">"ERROR"</span>, <span class="string">"WARNING"</span>, <span class="string">"INFO"</span>, <span class="string">"VERBOSE"</span>, <span class="string">"DEBUG"</span>, <span class="string">"MAX"</span>]</pre></div></div>
+    NAMES: [<span class="string">"FATAL"</span>, <span class="string">"ERROR"</span>, <span class="string">"WARNING"</span>, <span class="string">"INFO"</span>, <span class="string">"VERBOSE"</span>, <span class="string">"DEBUG"</span>, <span class="string">"MAX"</span>]
+
+  settings:
+    maxSeverity: <span class="number">3</span>
+    printToConsole: <span class="literal">true</span></pre></div></div>
             
         </li>
         
@@ -88,6 +92,48 @@ _.extend Observatory,</pre></div></div>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Initializing the system - creating loggers, subscribing etc
+Currently creates 1 ConsoleLogger and subscribes it system-wide.
+Also initializes default logger (Generic Emitter).
+TODO: add tests and settings format</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  initialize: (s)-&gt;
+    <span class="property">@_loggers</span> = []
+    <span class="keyword">if</span> s?
+      <span class="property">@settings</span>.maxSeverity = <span class="keyword">if</span> s.logLevel? <span class="keyword">then</span> <span class="property">@LOGLEVEL</span>[s.logLevel] <span class="keyword">else</span> <span class="number">3</span>
+      <span class="property">@settings</span>.printToConsole = s.printToConsole ? <span class="literal">true</span>
+
+    <span class="property">@_consoleLogger</span> = <span class="keyword">new</span> Observatory.ConsoleLogger <span class="string">'default'</span>
+    <span class="property">@subscribeLogger</span> <span class="property">@_consoleLogger</span>
+
+    <span class="property">@_defaultEmitter</span> = <span class="keyword">new</span> Observatory.GenericEmitter <span class="string">'default'</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Returns default logger to use in the app via warn(), debug() etc calls</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  getDefaultLogger: -&gt; <span class="property">@_defaultEmitter</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
               </div>
               <p>Check if we are run on server or client.
 NOTE! To be overriden for Meteor based implementations!</p>
@@ -99,26 +145,11 @@ NOTE! To be overriden for Meteor based implementations!</p>
         </li>
         
         
-        <li id="section-5">
+        <li id="section-7">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-5">&#182;</a>
-              </div>
-              <p>Maximum system-wide severity - info by default</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  maxSeverity: <span class="number">3</span></pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-6">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-6">&#182;</a>
+                <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
               <p>Formatters - functions that take arbitrary json and format it into a message that
 loggers can accept. Formatters can be chained - will be useful when implementing Meteor
@@ -135,11 +166,11 @@ related stuff.</p>
         </li>
         
         
-        <li id="section-7">
+        <li id="section-8">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-7">&#182;</a>
+                <a class="pilcrow" href="#section-8">&#182;</a>
               </div>
               <p>note that it&#39;s a function that gets passed around so <code>this</code> will be what we need</p>
 
@@ -152,11 +183,11 @@ related stuff.</p>
         </li>
         
         
-        <li id="section-8">
+        <li id="section-9">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-8">&#182;</a>
+                <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
               <p>View formatters take a message accepted by loggers and further format it for nice output,
 e.g., adding ANSI colors or html markup.</p>
@@ -165,7 +196,7 @@ e.g., adding ANSI colors or html markup.</p>
             
             <div class="content"><div class='highlight'><pre>  viewFormatters:
     _convertDate: (timestamp)-&gt;
-      timestamp.getUTCDate() + <span class="string">'/'</span> + timestamp.getUTCMonth() + <span class="string">'/'</span>+timestamp.getUTCFullYear()
+      timestamp.getUTCDate() + <span class="string">'/'</span> + (timestamp.getUTCMonth()+<span class="number">1</span>) + <span class="string">'/'</span>+timestamp.getUTCFullYear()
     _convertTime: (timestamp, ms=<span class="literal">true</span>)-&gt;
       ts = timestamp.getUTCHours()+ <span class="string">':'</span> + timestamp.getUTCMinutes() + <span class="string">':'</span> + timestamp.getUTCSeconds()
       ts += <span class="string">'.'</span> + timestamp.getUTCMilliseconds() <span class="keyword">if</span> ms
@@ -176,25 +207,11 @@ e.g., adding ANSI colors or html markup.</p>
       t = Observatory.viewFormatters
       ts = t._ps(t._convertDate(o.timestamp)) + t._ps(t._convertTime(o.timestamp))
       full_message = ts + <span class="keyword">if</span> o.isServer <span class="keyword">then</span> <span class="string">"[SERVER]"</span> <span class="keyword">else</span> <span class="string">"[CLIENT]"</span>
-      full_message+= <span class="keyword">if</span> o.module <span class="keyword">then</span> <span class="property">@_ps</span> o.module <span class="keyword">else</span> <span class="string">"[]"</span>
+      full_message+= <span class="keyword">if</span> o.module <span class="keyword">then</span> t._ps o.module <span class="keyword">else</span> <span class="string">"[]"</span>
       full_message+= t._ps(Observatory.LOGLEVEL.NAMES[o.severity]) <span class="comment">#TODO: RANGE CHECK!!!</span>
       full_message+= <span class="string">" <span class="subst">#{o.textMessage}</span>"</span>
+      full_message+= <span class="string">" | <span class="subst">#{JSON.stringify(o.object)}</span>"</span> <span class="keyword">if</span> o.object?
       full_message</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-9">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-9">&#182;</a>
-              </div>
-              <p>array of system-wide subscribing loggers</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  _loggers: []</pre></div></div>
             
         </li>
         
@@ -205,11 +222,11 @@ e.g., adding ANSI colors or html markup.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
-              <p>get all currently listening system-wide loggers</p>
+              <p>array of system-wide subscribing loggers</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  getLoggers: -&gt; <span class="property">@_loggers</span></pre></div></div>
+            <div class="content"><div class='highlight'><pre>  _loggers: []</pre></div></div>
             
         </li>
         
@@ -219,6 +236,21 @@ e.g., adding ANSI colors or html markup.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>get all currently listening system-wide loggers</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  getLoggers: -&gt; <span class="property">@_loggers</span></pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <p>add new logger to listen to messages</p>
 
@@ -230,11 +262,11 @@ e.g., adding ANSI colors or html markup.</p>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <p>remove logger from the listeners</p>
 
@@ -242,23 +274,6 @@ e.g., adding ANSI colors or html markup.</p>
             
             <div class="content"><div class='highlight'><pre>  unsubscribeLogger: (logger)-&gt;
     <span class="property">@_loggers</span> = _.without <span class="property">@_loggers</span>, logger</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-13">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
-              </div>
-              <p>reset - resets Observatory to the default state</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  reset: -&gt;
-    <span class="property">@_loggers</span> = []
-    <span class="property">@maxSeverity</span> = <span class="number">3</span></pre></div></div>
             
         </li>
         
@@ -365,7 +380,8 @@ It also checks if the Emitters generate messages in the correct format described
 <li><code>@useBuffer</code> - whether to log the messages immediately or buffer them first</li>
 <li><code>@interval</code> - if using buffer, how often we should process it.
 TODO: figure out how to use different interval-setting functions in pure js and Meteor.
-TODO: actual interval setup in the constructor</li>
+TODO: actual interval setup in the constructor
+TODO: tests for arguments shifting!!!</li>
 </ul>
 
             </div>
@@ -517,6 +533,23 @@ TODO: need to keep in mind bind() doesn&#39;t work in IE8 and below, but there&#
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
+              <p>Trace a error - format stacktrace nicely and output with ERROR level</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  trace: (error, module)-&gt;
+    message = error.stack ? error
+    <span class="property">@_emitWithSeverity</span> Observatory.LOGLEVEL.ERROR, message, module</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
               <p>Low-level emitting method that formats message and emits it</p>
 <ul>
 <li><code>severity</code> - level with wich to emit a message. Won&#39;t be emitted if higher than <code>@maxSeverity</code></li>
@@ -543,11 +576,11 @@ TODO: need to keep in mind bind() doesn&#39;t work in IE8 and below, but there&#
         </li>
         
         
-        <li id="section-28">
+        <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap for-h3">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
               <h3>ConsoleLogger</h3>
 <p>Basic logger to the console, without any fancy stuff</p>
@@ -559,13 +592,13 @@ TODO: need to keep in mind bind() doesn&#39;t work in IE8 and below, but there&#
         </li>
         
         
-        <li id="section-29">
+        <li id="section-30">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-29">&#182;</a>
+                <a class="pilcrow" href="#section-30">&#182;</a>
               </div>
-              <p>Simply redefining log() to output the message to the console</p>
+              <p>Simply redefining log() to output messages to the console</p>
 
             </div>
             

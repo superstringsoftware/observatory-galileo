@@ -219,8 +219,7 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
 # ### ConsoleLogger
 # Basic logger to the console, without any fancy stuff
 class Observatory.ConsoleLogger extends Observatory.Logger
-
-  # Simply redefining log() to output the message to the console
+  # Simply redefining log() to output messages to the console
   log: (m)-> console.log @formatter m
 
 (exports ? this).Observatory = Observatory
