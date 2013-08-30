@@ -6,6 +6,15 @@
 #
 # Below is the full API documentation, useful if you want to extend the framework. If you just want to
 # jump to usage, start reading with [Generic Emitter](#abcde).
+#
+# ### Basic framework architecture notes
+# * `MessageEmitters` emit messages - either from explicit calls to `logger.debug()` etc or by in turn listening or
+# monitoring some other provider: e.g., http connect module, external log service etc. Emitters use formatters
+# (`Observatory.formatters`) -->
+# * `Formatters` form or tranform messages into predefined json format that is acceptably by -->
+# * `Loggers` receive formatted messages from emitters and either buffer them or process immediately,
+# by applying further output formatting - e.g., adding ANSI colors or html tags - and output them into
+# different out devices - console, mongo collection etc.
 
 _ = require 'underscore' if require?
 
@@ -195,7 +204,6 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
   trace: (error, module)->
     message = error.stack ? error
     @_emitWithSeverity Observatory.LOGLEVEL.ERROR, message, module
-
 
   # Low-level emitting method that formats message and emits it
   #

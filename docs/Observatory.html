@@ -11,6 +11,27 @@
   <div id="container">
     <div id="background"></div>
     
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page">
+            
+              
+              <a class="source" href="Observatory.html">
+                Observatory.coffee
+              </a>
+            
+              
+              <a class="source" href="Toolbox.html">
+                Toolbox.coffee
+              </a>
+            
+          </div>
+        </li>
+      </ul>
+    
     <ul class="sections">
         
           <li id="title">
@@ -34,6 +55,16 @@ but can be used standalone independent of <a href="http://meteor.com">Meteor</a>
 Although you should <em>really</em> try Meteor. You&#39;ll love it, we promise :)</p>
 <p>Below is the full API documentation, useful if you want to extend the framework. If you just want to
 jump to usage, start reading with <a href="#abcde">Generic Emitter</a>.</p>
+<h3>Basic framework architecture notes</h3>
+<ul>
+<li><code>MessageEmitters</code> emit messages - either from explicit calls to <code>logger.debug()</code> etc or by in turn listening or
+monitoring some other provider: e.g., http connect module, external log service etc. Emitters use formatters
+(<code>Observatory.formatters</code>) --&gt;</li>
+<li><code>Formatters</code> form or tranform messages into predefined json format that is acceptably by --&gt;</li>
+<li><code>Loggers</code> receive formatted messages from emitters and either buffer them or process immediately,
+by applying further output formatting - e.g., adding ANSI colors or html tags - and output them into
+different out devices - console, mongo collection etc.</li>
+</ul>
 
             </div>
             

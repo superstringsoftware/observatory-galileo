@@ -193,6 +193,7 @@ describe 'Observatory - centralized code and functions', ->
         dl.should.be.an.instanceOf GenericEmitter
         describe 'Now testing how messages from emitter reach the logger',->
           it 'should print stuff out - look at the screen!',->
+            ###
             dl.info 'Message is this'
             b = a: 'a', b: 1, d: new Date
             dl.verbose 'too much words', b
@@ -202,6 +203,8 @@ describe 'Observatory - centralized code and functions', ->
               throw new Error 'Test Error'
             catch e
               dl.trace e, 'tests'
+
+            ###
 
 
 
