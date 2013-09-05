@@ -1,13 +1,18 @@
+###
+
+  # Commented out for Meteor usage
+
 if require?
   Observatory = (require './Observatory.coffee').Observatory
   {MessageEmitter, GenericEmitter, Logger, ConsoleLogger, LOGLEVEL} = Observatory
-
+###
 
 # ### Constants and common definitions
 Observatory = Observatory ? {}
 
+#console.log Observatory
 # TLog replacement?
-class Observatory.Toolbox extends GenericEmitter
+class Observatory.Toolbox extends Observatory.GenericEmitter
 
   exec: (f, options = errors: true, profile: true, profileLoglevel: LOGLEVEL.INFO, message: "exec() call" )=>
     @error "Tried to call exec() without a function as an argument"; return if typeof f isnt 'function'
@@ -49,5 +54,6 @@ class Observatory.Toolbox extends GenericEmitter
     ret
 
 
-
+#console.log Observatory
 (exports ? this).Observatory = Observatory
+#console.log Observatory

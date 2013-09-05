@@ -16,7 +16,13 @@
 # by applying further output formatting - e.g., adding ANSI colors or html tags - and output them into
 # different out devices - console, mongo collection etc.
 
-_ = require 'underscore' if require?
+###
+
+  # Commented out for Meteor usage
+
+require = if Npm? then Npm.require else require
+_ = require 'underscore'
+###
 
 # ### Constants and common definitions
 Observatory = Observatory ? {}
@@ -51,11 +57,11 @@ _.extend Observatory,
     @_consoleLogger = new Observatory.ConsoleLogger 'default'
     @subscribeLogger @_consoleLogger
 
-    @_defaultEmitter = new Observatory.GenericEmitter 'default'
+    @_defaultEmitter = new Observatory.Toolbox 'default'
 
   # Returns default logger to use in the app via warn(), debug() etc calls
   getDefaultLogger: -> @_defaultEmitter
-
+  getToolbox: -> @_defaultEmitter
 
   # Check if we are run on server or client.
   # NOTE! To be overriden for Meteor based implementations!
@@ -114,7 +120,13 @@ class Observatory.MessageEmitter
   _loggers = [] # array of subscribing loggers
 
   _getLoggers: -> @_loggers
-  constructor: (@name)-> @_loggers = []
+  constructor: (@name, @formatter)->
+    @_loggers = []
+    @isOn = true
+
+  # only emit messages if we are on
+  turnOn: -> @isOn = true
+  turnOff: -> @isOn = false
 
   # add new logger to listen to messages
   subscribeLogger: (logger)->
@@ -129,8 +141,13 @@ class Observatory.MessageEmitter
   # Normally, only system-wide loggers are used, subscription for specific emitters is to provide
   # finer-grained control.
   emitMessage: (message)->
+    return unless @isOn
     l.addMessage message for l in Observatory.getLoggers()
     l.addMessage message for l in @_loggers if @_loggers.length > 0
+    message
+
+  emitFormattedMessage: (message)->
+    @emitMessage @formatter message if @isOn and @formatter? and (typeof @formatter is 'function')
     message
 
 # ### Logger
@@ -151,6 +168,7 @@ class Observatory.Logger
       @useBuffer = @formatter
       @formatter = Observatory.viewFormatters.basicConsole
     @messageBuffer = []
+    super
 
   # `messageAcceptable` verifies that Emitters give messages in the format that
   # can be recognized by this logger. At the very minimum, we are checking for
