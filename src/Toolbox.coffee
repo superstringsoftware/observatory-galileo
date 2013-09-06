@@ -13,6 +13,7 @@ Observatory = Observatory ? {}
 #console.log Observatory
 # TLog replacement?
 class Observatory.Toolbox extends Observatory.GenericEmitter
+  #constructor: (name, maxSeverity, formatter)-> super name, maxSeverity, formatter
 
   exec: (f, options = errors: true, profile: true, profileLoglevel: LOGLEVEL.INFO, message: "exec() call" )=>
     @error "Tried to call exec() without a function as an argument"; return if typeof f isnt 'function'

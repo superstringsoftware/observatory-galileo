@@ -48,17 +48,20 @@ _.extend Observatory,
   # Currently creates 1 ConsoleLogger and subscribes it system-wide.
   # Also initializes default logger (Generic Emitter).
   # TODO: add tests and settings format
-  initialize: (s)->
-    @_loggers = []
-    if s?
-      @settings.maxSeverity = if s.logLevel? then @LOGLEVEL[s.logLevel] else 3
-      @settings.printToConsole = s.printToConsole ? true
-
-    @_consoleLogger = new Observatory.ConsoleLogger 'default'
-    @subscribeLogger @_consoleLogger
-
-    @_defaultEmitter = new Observatory.Toolbox 'default'
-
+  initialize: (settings)-> f.call this, settings for f in @_initFunctions
+  registerInitFunction: (f)-> @_initFunctions.push f
+  # array of initialization functions
+  _initFunctions: [
+    (s)->
+      @_loggers = []
+      if s?
+        @settings.maxSeverity = if s.logLevel? then @LOGLEVEL[s.logLevel] else 3
+        @settings.printToConsole = s.printToConsole ? true
+      @_consoleLogger = new Observatory.ConsoleLogger 'default'
+      @subscribeLogger @_consoleLogger
+      @_defaultEmitter = new Observatory.Toolbox 'default'
+  ]
+  
   # Returns default logger to use in the app via warn(), debug() etc calls
   getDefaultLogger: -> @_defaultEmitter
   getToolbox: -> @_defaultEmitter
@@ -168,7 +171,7 @@ class Observatory.Logger
       @useBuffer = @formatter
       @formatter = Observatory.viewFormatters.basicConsole
     @messageBuffer = []
-    super
+    #super
 
   # `messageAcceptable` verifies that Emitters give messages in the format that
   # can be recognized by this logger. At the very minimum, we are checking for
@@ -178,9 +181,9 @@ class Observatory.Logger
 
   # `addMessage` is the listening method that takes messages from Emitters
   # TODO: do we really need to throw an error??? add some kind of 'strict mode'?
-  addMessage: (message)->
+  addMessage: (message, useBuffer = false)->
     throw new Error "Unacceptable message format in logger: #{@name}" if not @messageAcceptable message
-    if @useBuffer then @messageBuffer.push message else @log message
+    if @useBuffer or useBuffer then @messageBuffer.push message else @log message
 
   # `log` - 'virtual' function that does actual output of the message. Needs to be overriden by extending
   # classes with e.g. logging to console or inserting into Meteor Collection. Does nothing here.
@@ -211,7 +214,7 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
     else
       @formatter = Observatory.formatters.basicFormatter
 
-    super name
+    super name, @formatter
     # some dynamic js magic - defining different severity method aliases programmatically to be DRY.
     # TODO: need to keep in mind bind() doesn't work in IE8 and below, but there's a
     # [script to fix this](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind#Compatibility)
