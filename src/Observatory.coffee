@@ -54,13 +54,26 @@ _.extend Observatory,
   _initFunctions: [
     (s)->
       @_loggers = []
+      @emitters = {}
       if s?
         @settings.maxSeverity = if s.logLevel? then @LOGLEVEL[s.logLevel] else 3
         @settings.printToConsole = s.printToConsole ? true
       @_consoleLogger = new Observatory.ConsoleLogger 'default'
       @subscribeLogger @_consoleLogger
-      @_defaultEmitter = new Observatory.Toolbox 'default'
+      @_defaultEmitter = new Observatory.Toolbox 'Toolbox'
+      @emitters.Toolbox = @_defaultEmitter
+      @emitters.Toolbox.maxSeverity = @settings.maxSeverity
   ]
+
+  setSettings: (s)->
+    if s.maxSeverity?
+      @settings.maxSeverity = s.maxSeverity
+    else 
+      if s.logLevel? then @settings.maxSeverity = s.logLevel
+    @emitters.Toolbox?.maxSeverity = @settings.maxSeverity
+    if s.printToConsole? and (s.printToConsole isnt @settings.printToConsole)
+      @settings.printToConsole = s.printToConsole
+      if s.printToConsole is true then @subscribeLogger @_consoleLogger else @unsubscribeLogger @_consoleLogger
   
   # Returns default logger to use in the app via warn(), debug() etc calls
   getDefaultLogger: -> @_defaultEmitter
@@ -123,7 +136,9 @@ class Observatory.MessageEmitter
   _loggers = [] # array of subscribing loggers
 
   _getLoggers: -> @_loggers
+  
   constructor: (@name, @formatter)->
+    #console.log "MessageEmitter::constructor #{name}"
     @_loggers = []
     @isOn = true
     @isOff = false
@@ -145,13 +160,15 @@ class Observatory.MessageEmitter
   # Normally, only system-wide loggers are used, subscription for specific emitters is to provide
   # finer-grained control.
   emitMessage: (message, buffer = false)->
+    #console.log "MessageEmitter::emitMessage() with buffer: #{buffer}"
     return unless @isOn
     l.addMessage message, buffer for l in Observatory.getLoggers()
     l.addMessage message, buffer for l in @_loggers if @_loggers.length > 0
     message
 
   emitFormattedMessage: (message, buffer = false)->
-    @emitMessage @formatter message, buffer if @isOn and @formatter? and (typeof @formatter is 'function')
+    #console.log "MessageEmitter::emitFormattedMessage() with buffer: #{buffer}"
+    @emitMessage (@formatter message), buffer if @isOn and @formatter? and (typeof @formatter is 'function')
     message
 
 # ### Logger
@@ -183,6 +200,7 @@ class Observatory.Logger
   # `addMessage` is the listening method that takes messages from Emitters
   # TODO: do we really need to throw an error??? add some kind of 'strict mode'?
   addMessage: (message, useBuffer = false)->
+    #console.log "Logger::addMessage() with useBuffer: #{useBuffer}"
     throw new Error "Unacceptable message format in logger: #{@name}" if not @messageAcceptable message
     if @useBuffer or useBuffer then @messageBuffer.push message else @log message
 
@@ -251,5 +269,13 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
 class Observatory.ConsoleLogger extends Observatory.Logger
   # Simply redefining log() to output messages to the console
   log: (m)-> console.log @formatter m
+
+  # ignoring any buffering requests
+  addMessage: (message, useBuffer)->
+    #console.log "addMessage() called for message:"
+    #console.log message
+    throw new Error "Unacceptable message format in logger: #{@name}" if not @messageAcceptable message
+    @log message
+
 
 (exports ? this).Observatory = Observatory
