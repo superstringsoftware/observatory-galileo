@@ -34,7 +34,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     ret
 
 
-  inspect: (obj, long = true, print = true)->
+  inspect: (obj, long = true, print = false)->
     ret =
       functions: []
       objects: []

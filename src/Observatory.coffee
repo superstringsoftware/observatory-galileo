@@ -243,7 +243,7 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
       module = obj
       obj = null
 
-    options = severity: severity, message: message, obj: obj, module: module ? @name # explicit module overrides name
+    options = severity: severity, message: message, object: obj, module: module ? @name # explicit module overrides name
     @emitMessage @formatter(options)
 
 # ### ConsoleLogger
