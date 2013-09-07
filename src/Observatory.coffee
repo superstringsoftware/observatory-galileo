@@ -126,10 +126,11 @@ class Observatory.MessageEmitter
   constructor: (@name, @formatter)->
     @_loggers = []
     @isOn = true
+    @isOff = false
 
   # only emit messages if we are on
-  turnOn: -> @isOn = true
-  turnOff: -> @isOn = false
+  turnOn: -> @isOn = true; @isOff = false
+  turnOff: -> @isOn = false; @isOff = true
 
   # add new logger to listen to messages
   subscribeLogger: (logger)->
@@ -143,14 +144,14 @@ class Observatory.MessageEmitter
   # `logger` has to respond to `addMessage(msg)` call.
   # Normally, only system-wide loggers are used, subscription for specific emitters is to provide
   # finer-grained control.
-  emitMessage: (message)->
+  emitMessage: (message, buffer = false)->
     return unless @isOn
-    l.addMessage message for l in Observatory.getLoggers()
-    l.addMessage message for l in @_loggers if @_loggers.length > 0
+    l.addMessage message, buffer for l in Observatory.getLoggers()
+    l.addMessage message, buffer for l in @_loggers if @_loggers.length > 0
     message
 
-  emitFormattedMessage: (message)->
-    @emitMessage @formatter message if @isOn and @formatter? and (typeof @formatter is 'function')
+  emitFormattedMessage: (message, buffer = false)->
+    @emitMessage @formatter message, buffer if @isOn and @formatter? and (typeof @formatter is 'function')
     message
 
 # ### Logger
