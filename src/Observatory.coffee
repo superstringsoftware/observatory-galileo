@@ -99,8 +99,10 @@ _.extend Observatory,
   # View formatters take a message accepted by loggers and further format it for nice output,
   # e.g., adding ANSI colors or html markup.
   viewFormatters:
-    _convertDate: (timestamp)->
-      timestamp.getUTCDate() + '/' + (timestamp.getUTCMonth()+1) + '/'+timestamp.getUTCFullYear()
+    _convertDate: (timestamp, long = false)->
+      ds = timestamp.getUTCDate() + '/' + (timestamp.getUTCMonth()+1)
+      ds = ds +  + '/'+timestamp.getUTCFullYear() if long
+      ds
     _convertTime: (timestamp, ms=true)->
       ts = timestamp.getUTCHours()+ ':' + timestamp.getUTCMinutes() + ':' + timestamp.getUTCSeconds()
       ts += '.' + timestamp.getUTCMilliseconds() if ms
@@ -241,8 +243,8 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
       @[m] = @_emitWithSeverity.bind this, i
 
   # Trace a error - format stacktrace nicely and output with ERROR level
-  trace: (error, module)->
-    message = error.stack ? error
+  trace: (error, msg, module)->
+    message = msg + '\n' + (error.stack ? error)
     @_emitWithSeverity Observatory.LOGLEVEL.ERROR, message, module
 
   # Low-level emitting method that formats message and emits it
