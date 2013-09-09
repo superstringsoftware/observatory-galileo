@@ -55,11 +55,12 @@ _.extend Observatory,
     (s)->
       @_loggers = []
       @emitters = {}
+      #console.log s
       if s?
         @settings.maxSeverity = if s.logLevel? then @LOGLEVEL[s.logLevel] else 3
         @settings.printToConsole = s.printToConsole ? true
       @_consoleLogger = new Observatory.ConsoleLogger 'default'
-      @subscribeLogger @_consoleLogger
+      @subscribeLogger @_consoleLogger if @settings.printToConsole
       @_defaultEmitter = new Observatory.Toolbox 'Toolbox'
       @emitters.Toolbox = @_defaultEmitter
       @emitters.Toolbox.maxSeverity = @settings.maxSeverity
