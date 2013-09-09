@@ -246,7 +246,7 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
   # Trace a error - format stacktrace nicely and output with ERROR level
   trace: (error, msg, module)->
     message = msg + '\n' + (error.stack ? error)
-    @_emitWithSeverity Observatory.LOGLEVEL.ERROR, message, module
+    @_emitWithSeverity Observatory.LOGLEVEL.ERROR, message, error, module
 
   # Low-level emitting method that formats message and emits it
   #
