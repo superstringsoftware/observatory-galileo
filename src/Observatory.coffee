@@ -94,7 +94,7 @@ _.extend Observatory,
         textMessage: options.message
         # note that it's a function that gets passed around so `this` will be what we need
         module: options.module # should the priority be reversed?
-        object: options.obj
+        object: options.object ? options.obj
         isServer: Observatory.isServer()
 
   # View formatters take a message accepted by loggers and further format it for nice output,

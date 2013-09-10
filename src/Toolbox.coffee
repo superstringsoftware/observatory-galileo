@@ -15,22 +15,30 @@ Observatory = Observatory ? {}
 class Observatory.Toolbox extends Observatory.GenericEmitter
   #constructor: (name, maxSeverity, formatter)-> super name, maxSeverity, formatter
 
-  exec: (f, options = errors: true, profile: true, profileLoglevel: LOGLEVEL.INFO, message: "exec() call" )=>
-    @error "Tried to call exec() without a function as an argument"; return if typeof f isnt 'function'
-    @_emitWithSeverity options.profileLoglevel, options.message + " starting for " + f.toString()
+  exec: (f, options = errors: true, profile: true, profileLoglevel: 'INFO', message: "exec() call" )=>
+    if typeof f isnt 'function'
+      @error "Tried to call exec() without a function as an argument"
+      return 
+
+    obj = 
+      function: f.toString()
+
+    @_emitWithSeverity Observatory.LOGLEVEL[options.profileLoglevel], options.message + " starting for " + obj.function, 'profiler'
     if options.errors
       try
-        t = new Date if options.profile
-        ret = f()
-        t2 = new Date - t if options.profile
+        t = Date.now() if options.profile
+        ret = f.call this
+        t2 = Date.now() - t if options.profile
       catch e
         t2 = new Date - t if options.profile
         @trace e
     else
-      t = new Date if options.profile
-      ret = f()
-      t2 = new Date - t if options.profile
-    @_emitWithSeverity options.profileLoglevel, options.message + " done in #{t2} ms" if options.profile
+      t = Date.now() if options.profile
+      ret = f.call this
+      t2 = Date.now() - t if options.profile
+
+    obj.timeElapsed = t2
+    @_emitWithSeverity Observatory.LOGLEVEL[options.profileLoglevel], options.message + " done in #{t2} ms", obj, 'profiler' if options.profile
     ret
 
 
