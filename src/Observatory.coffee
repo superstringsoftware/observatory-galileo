@@ -96,6 +96,7 @@ _.extend Observatory,
         module: options.module # should the priority be reversed?
         object: options.object ? options.obj
         isServer: Observatory.isServer()
+        type: options.type
 
   # View formatters take a message accepted by loggers and further format it for nice output,
   # e.g., adding ANSI colors or html markup.
@@ -254,18 +255,23 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
   # * `message` - text message to include into the full log message to be passed to loggers
   # * `module` - optional module name. If the emitter is named, its' name will be used instead in any case.
   # * `obj` - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to `error`
-  _emitWithSeverity: (severity, message, obj, module)->
-    return false if not severity? or severity > @maxSeverity
+  _forceEmitWithSeverity: (severity, message, obj, module, type)->
     if typeof message is 'object'
+      type = module
       module = obj
       obj = message
       message = JSON.stringify obj
     if typeof obj is 'string'
+      type = module
       module = obj
       obj = null
 
-    options = severity: severity, message: message, object: obj, module: module ? @name # explicit module overrides name
+    options = severity: severity, message: message, object: obj, type: type, module: module ? @name # explicit module overrides name
     @emitMessage @formatter(options)
+
+  _emitWithSeverity: (severity, message, obj, module, type)->
+    return false if not severity? or (severity > @maxSeverity)
+    @_forceEmitWithSeverity severity, message, obj, module, type
 
 # ### ConsoleLogger
 # Basic logger to the console, without any fancy stuff

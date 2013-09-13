@@ -22,6 +22,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
 
     obj = 
       function: f.toString()
+      type: 'profile'
 
     @_emitWithSeverity Observatory.LOGLEVEL[options.profileLoglevel], options.message + " starting for " + obj.function, 'profiler'
     if options.errors
@@ -40,6 +41,12 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     obj.timeElapsed = t2
     @_emitWithSeverity Observatory.LOGLEVEL[options.profileLoglevel], options.message + " done in #{t2} ms", obj, 'profiler' if options.profile
     ret
+
+
+  profile: (message, time, object, module = 'profiler', severity = 'VERBOSE')->
+    object = object ? {}
+    object.timeElapsed = time
+    @_emitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile'
 
 
   inspect: (obj, long = true, print = false)->
