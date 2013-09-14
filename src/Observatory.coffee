@@ -44,6 +44,12 @@ _.extend Observatory,
     maxSeverity: 3
     printToConsole: true
 
+  # This is KEY for handshakes and stuff
+  version:
+    major: 0
+    minor: 3
+    patch: 2
+
   # Initializing the system - creating loggers, subscribing etc
   # Currently creates 1 ConsoleLogger and subscribes it system-wide.
   # Also initializes default logger (Generic Emitter).
@@ -255,23 +261,25 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
   # * `message` - text message to include into the full log message to be passed to loggers
   # * `module` - optional module name. If the emitter is named, its' name will be used instead in any case.
   # * `obj` - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to `error`
-  _forceEmitWithSeverity: (severity, message, obj, module, type)->
+  _forceEmitWithSeverity: (severity, message, obj, module, type, buffer = false)->
     if typeof message is 'object'
+      buffer = type
       type = module
       module = obj
       obj = message
       message = JSON.stringify obj
     if typeof obj is 'string'
+      buffer = type
       type = module
       module = obj
       obj = null
 
     options = severity: severity, message: message, object: obj, type: type, module: module ? @name # explicit module overrides name
-    @emitMessage @formatter(options)
+    @emitMessage @formatter(options), buffer
 
-  _emitWithSeverity: (severity, message, obj, module, type)->
+  _emitWithSeverity: (severity, message, obj, module, type, buffer = false)->
     return false if not severity? or (severity > @maxSeverity)
-    @_forceEmitWithSeverity severity, message, obj, module, type
+    @_forceEmitWithSeverity severity, message, obj, module, type, buffer
 
 # ### ConsoleLogger
 # Basic logger to the console, without any fancy stuff
