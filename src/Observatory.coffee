@@ -44,12 +44,6 @@ _.extend Observatory,
     maxSeverity: 3
     printToConsole: true
 
-  # This is KEY for handshakes and stuff
-  version:
-    major: 0
-    minor: 3
-    patch: 2
-
   # Initializing the system - creating loggers, subscribing etc
   # Currently creates 1 ConsoleLogger and subscribes it system-wide.
   # Also initializes default logger (Generic Emitter).
