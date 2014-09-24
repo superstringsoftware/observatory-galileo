@@ -42,7 +42,7 @@ _.extend Observatory,
 
   settings:
     maxSeverity: 3
-    printToConsole: true
+    printToConsole: false
 
   # Initializing the system - creating loggers, subscribing etc
   # Currently creates 1 ConsoleLogger and subscribes it system-wide.
