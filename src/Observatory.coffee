@@ -70,7 +70,7 @@ _.extend Observatory,
     if s.maxSeverity?
       @settings.maxSeverity = s.maxSeverity
     else 
-      if s.logLevel? then @settings.maxSeverity = s.logLevel
+      if s.logLevel? then @settings.maxSeverity = @LOGLEVEL[s.logLevel]
     @emitters.Toolbox?.maxSeverity = @settings.maxSeverity
     if s.printToConsole? and (s.printToConsole isnt @settings.printToConsole)
       @settings.printToConsole = s.printToConsole
