@@ -66,15 +66,21 @@ _.extend Observatory,
       @emitters.Toolbox.maxSeverity = @settings.maxSeverity
   ]
 
+  # Setting the settings, in reality it's only setting right severity on all the emitters
   setSettings: (s)->
+    # first getting correct numeric maxSeverity from settings
     if s.maxSeverity?
       @settings.maxSeverity = s.maxSeverity
     else 
       if s.logLevel? then @settings.maxSeverity = @LOGLEVEL[s.logLevel]
-    @emitters.Toolbox?.maxSeverity = @settings.maxSeverity
+    # now processing console logger
     if s.printToConsole? and (s.printToConsole isnt @settings.printToConsole)
       @settings.printToConsole = s.printToConsole
       if s.printToConsole is true then @subscribeLogger @_consoleLogger else @unsubscribeLogger @_consoleLogger
+    # now setting max severity for all emitters
+    for k,v of @emitters
+      console.log k
+    @emitters.Toolbox?.maxSeverity = @settings.maxSeverity
   
   # Returns default logger to use in the app via warn(), debug() etc calls
   getDefaultLogger: -> @_defaultEmitter
@@ -251,7 +257,7 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
 
   # Low-level emitting method that formats message and emits it
   #
-  # * `severity` - level with wich to emit a message. Won't be emitted if higher than `@maxSeverity`
+  # * `severity` - level with which to emit a message. Won't be emitted if higher than `@maxSeverity`
   # * `message` - text message to include into the full log message to be passed to loggers
   # * `module` - optional module name. If the emitter is named, its' name will be used instead in any case.
   # * `obj` - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to `error`
