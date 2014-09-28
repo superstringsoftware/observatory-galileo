@@ -79,8 +79,9 @@ _.extend Observatory,
       if s.printToConsole is true then @subscribeLogger @_consoleLogger else @unsubscribeLogger @_consoleLogger
     # now setting max severity for all emitters
     for k,v of @emitters
-      console.log k
-    @emitters.Toolbox?.maxSeverity = @settings.maxSeverity
+      #console.log v
+      v.maxSeverity = @settings.maxSeverity
+    #@emitters.Toolbox?.maxSeverity = @settings.maxSeverity
   
   # Returns default logger to use in the app via warn(), debug() etc calls
   getDefaultLogger: -> @_defaultEmitter
