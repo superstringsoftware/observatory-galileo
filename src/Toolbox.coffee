@@ -47,6 +47,11 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     object.timeElapsed = time
     @_emitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile'
 
+  _profile: (message, time, object, module = 'profiler', severity = 'VERBOSE', buffer = false)->
+    object = object ? {}
+    object.timeElapsed = time
+    @_forceEmitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile'
+
 
   inspect: (obj, long = true, print = false)->
     ret =

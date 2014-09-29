@@ -250,6 +250,9 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
     # [script to fix this](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind#Compatibility)
     for m,i in ['fatal','error','warn','info','verbose','debug','insaneVerbose']
       @[m] = @_emitWithSeverity.bind this, i
+    # same but ignoring global logging level
+    for m,i in ['_fatal','_error','_warn','_info','_verbose','_debug','_insaneVerbose']
+      @[m] = @_forceEmitWithSeverity.bind this, i
 
   # Trace a error - format stacktrace nicely and output with ERROR level
   trace: (error, msg, module)->
