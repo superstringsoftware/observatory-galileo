@@ -109,14 +109,20 @@ _.extend Observatory,
   # e.g., adding ANSI colors or html markup.
   viewFormatters:
     _convertDate: (timestamp, long = false)->
-      ds = timestamp.getUTCDate() + '/' + (timestamp.getUTCMonth()+1)
+      ds = @_lpad(timestamp.getUTCDate(), 2) + '/' + @_lpad(timestamp.getUTCMonth() + 1, 2)
       ds = ds +  + '/'+timestamp.getUTCFullYear() if long
       ds
-    _convertTime: (timestamp, ms=true)->
-      ts = timestamp.getUTCHours()+ ':' + timestamp.getUTCMinutes() + ':' + timestamp.getUTCSeconds()
-      ts += '.' + timestamp.getUTCMilliseconds() if ms
+    _convertTime: (timestamp, ms = true) ->
+      ts = @_lpad(timestamp.getUTCHours(), 2) + ':' + @_lpad(timestamp.getUTCMinutes(), 2) + ':' + @_lpad(timestamp.getUTCSeconds(), 2)
+      ts += '.' + @_lpad(timestamp.getUTCMilliseconds(), 3) if ms
       ts
     _ps: (s)-> '['+s+']'
+    _lpad: (str = '', length = 0, padStr = '0') ->
+      length -= str.toString().length
+      while length > 0
+        str = padStr + str
+        length--
+      str
 
     basicConsole: (o)->
       t = Observatory.viewFormatters
@@ -144,19 +150,17 @@ _.extend Observatory,
 # ### MessageEmitter
 # This class is the base for anything that wants to produce messages to be logged.
 class Observatory.MessageEmitter
-  _loggers = [] # array of subscribing loggers
 
-  _getLoggers: -> @_loggers
-  
   constructor: (@name, @formatter)->
     #console.log "MessageEmitter::constructor #{name}"
-    @_loggers = []
+    @_loggers = [] # array of subscribing loggers
     @isOn = true
-    @isOff = false
+
+  _getLoggers: -> @_loggers
 
   # only emit messages if we are on
-  turnOn: -> @isOn = true; @isOff = false
-  turnOff: -> @isOn = false; @isOff = true
+  turnOn: -> @isOn = true
+  turnOff: -> @isOn = false
 
   # add new logger to listen to messages
   subscribeLogger: (logger)->
