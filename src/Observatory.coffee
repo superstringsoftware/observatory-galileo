@@ -48,8 +48,12 @@ _.extend Observatory,
   # Currently creates 1 ConsoleLogger and subscribes it system-wide.
   # Also initializes default logger (Generic Emitter).
   # TODO: add tests and settings format
-  initialize: (settings)-> f.call this, settings for f in @_initFunctions
-  registerInitFunction: (f)-> @_initFunctions.push f
+  initialize: (settings)->
+    f.call this, settings for f in @_initFunctions
+
+  registerInitFunction: (f)->
+    @_initFunctions.push f
+
   # array of initialization functions
   _initFunctions: [
     (s)->
@@ -71,7 +75,7 @@ _.extend Observatory,
     # first getting correct numeric maxSeverity from settings
     if s.maxSeverity?
       @settings.maxSeverity = s.maxSeverity
-    else 
+    else
       if s.logLevel? then @settings.maxSeverity = @LOGLEVEL[s.logLevel]
     # now processing console logger
     if s.printToConsole? and (s.printToConsole isnt @settings.printToConsole)
@@ -82,13 +86,13 @@ _.extend Observatory,
       #console.log v
       v.maxSeverity = @settings.maxSeverity
     #@emitters.Toolbox?.maxSeverity = @settings.maxSeverity
-  
+
   # Returns default logger to use in the app via warn(), debug() etc calls
   getDefaultLogger: -> @_defaultEmitter
   getToolbox: -> @_defaultEmitter
 
   # Check if we are run on server or client.
-  # NOTE! To be overriden for Meteor based implementations!
+  # NOTE! To be overridden for Meteor based implementations!
   isServer: -> not (typeof window isnt "undefined" and window.document)
 
   # Formatters - functions that take arbitrary json and format it into a message that
@@ -293,7 +297,8 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
 # Basic logger to the console, without any fancy stuff
 class Observatory.ConsoleLogger extends Observatory.Logger
   # Simply redefining log() to output messages to the console
-  log: (m)-> console.log @formatter m
+  log: (m) ->
+    console.log @formatter m
 
   # ignoring any buffering requests
   addMessage: (message, useBuffer)->
