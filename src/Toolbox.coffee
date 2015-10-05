@@ -61,7 +61,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     for k,v of obj
       switch typeof v
         when 'function' then ret.functions.push key: k, value: v.toString()
-        when 'object' then ret.objects.push key: k, (if long then value: v else value: "Object")
+        when 'object' then ret.objects.push key: k, value: (if long then v else "Object")
         else ret.vars.push key: k, value: v
     if print
       for t in ['functions','objects','vars']
