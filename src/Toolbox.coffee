@@ -53,15 +53,15 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     @_forceEmitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile'
 
 
-  inspect: (obj, long = true, print = false)->
+  inspect: (obj, long = false, print = false)->
     ret =
       functions: []
       objects: []
       vars: []
     for k,v of obj
       switch typeof v
-        when 'function' then ret.functions.push key: k, value: v
-        when 'object' then ret.objects.push key: k, value: v
+        when 'function' then ret.functions.push key: k, value: v.toString()
+        when 'object' then ret.objects.push key: k, (if long then value: v else value: "Object")
         else ret.vars.push key: k, value: v
     if print
       for t in ['functions','objects','vars']
