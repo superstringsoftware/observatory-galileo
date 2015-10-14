@@ -27,6 +27,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     object.timeElapsed = time
     @_forceEmitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile', buffer
 
+  # TODO: check if profiling is on and optimize method call if not - so that people can wrap into profiling wherever they want and not worry about performance
   # profile sync function execution
   # * options: additional options to put into profiling log message
   # * - message: message to log with
