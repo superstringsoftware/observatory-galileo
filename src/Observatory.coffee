@@ -25,7 +25,7 @@ _ = require 'underscore'
 ###
 
 # ### Constants and common definitions
-Observatory = Observatory ? {}
+Observatory = @Observatory ? {}
 
 _.extend Observatory,
   # Log level (severity) definitions
@@ -43,6 +43,12 @@ _.extend Observatory,
   settings:
     maxSeverity: 3
     printToConsole: false
+    profiling:
+      isOn: true # globally profiling on or off?
+      onlyDanger: false # only log profiling times above DANGER threshold?
+      onlyWarning: false # only log profiling times above WARNING threshold?
+      DANGER_THRESHOLD: 1000 # 1s
+      WARNING_THRESHOLD: 100 # 100 ms
 
   # Initializing the system - creating loggers, subscribing etc
   # Currently creates 1 ConsoleLogger and subscribes it system-wide.
@@ -63,6 +69,7 @@ _.extend Observatory,
       if s?
         @settings.maxSeverity = if s.logLevel? then @LOGLEVEL[s.logLevel] else 3
         @settings.printToConsole = s.printToConsole ? true
+        @settings.profiling = s.profiling if s.profiling?
       @_consoleLogger = new Observatory.ConsoleLogger 'default'
       @subscribeLogger @_consoleLogger if @settings.printToConsole
       @_defaultEmitter = new Observatory.Toolbox 'Toolbox'
@@ -72,6 +79,7 @@ _.extend Observatory,
 
   # Setting the settings, in reality it's only setting right severity on all the emitters
   setSettings: (s)->
+    @settings.profiling = s.profiling if s.profiling?
     # first getting correct numeric maxSeverity from settings
     if s.maxSeverity?
       @settings.maxSeverity = s.maxSeverity
@@ -149,163 +157,6 @@ _.extend Observatory,
   # remove logger from the listeners
   unsubscribeLogger: (logger)->
     @_loggers = _.without @_loggers, logger
-
-
-# ### MessageEmitter
-# This class is the base for anything that wants to produce messages to be logged.
-class Observatory.MessageEmitter
-
-  constructor: (@name, @formatter)->
-    #console.log "MessageEmitter::constructor #{name}"
-    @_loggers = [] # array of subscribing loggers
-    @isOn = true
-
-  _getLoggers: -> @_loggers
-
-  # only emit messages if we are on
-  turnOn: -> @isOn = true
-  turnOff: -> @isOn = false
-
-  # add new logger to listen to messages
-  subscribeLogger: (logger)->
-    @_loggers.push logger
-
-  # remove logger from the listeners
-  unsubscribeLogger: (logger)->
-    @_loggers = _.without @_loggers, logger
-
-  # Translates message to be logged to all subscribed loggers.
-  # `logger` has to respond to `addMessage(msg)` call.
-  # Normally, only system-wide loggers are used, subscription for specific emitters is to provide
-  # finer-grained control.
-  emitMessage: (message, buffer = false)->
-    #console.log "MessageEmitter::emitMessage() with buffer: #{buffer}"
-    return unless @isOn
-    l.addMessage message, buffer for l in Observatory.getLoggers()
-    l.addMessage message, buffer for l in @_loggers if @_loggers.length > 0
-    message
-
-  emitFormattedMessage: (message, buffer = false)->
-    #console.log "MessageEmitter::emitFormattedMessage() with buffer: #{buffer}"
-    @emitMessage (@formatter message), buffer if @isOn and @formatter? and (typeof @formatter is 'function')
-    message
-
-# ### Logger
-# Logger listens to messages and processes them, one by one or in batches.
-# It also checks if the Emitters generate messages in the correct format described below.
-class Observatory.Logger
-  messageBuffer = []
-
-  # * `@name` is a module name
-  # * `@useBuffer` - whether to log the messages immediately or buffer them first
-  # * `@interval` - if using buffer, how often we should process it.
-  # TODO: figure out how to use different interval-setting functions in pure js and Meteor.
-  # TODO: actual interval setup in the constructor
-  # TODO: tests for arguments shifting!!!
-  constructor: (@name, @formatter = Observatory.viewFormatters.basicConsole, @useBuffer = false, @interval = 3000)->
-    if typeof formatter is 'boolean'
-      @interval = @useBuffer
-      @useBuffer = @formatter
-      @formatter = Observatory.viewFormatters.basicConsole
-    @messageBuffer = []
-    #super
-
-  # `messageAcceptable` verifies that Emitters give messages in the format that
-  # can be recognized by this logger. At the very minimum, we are checking for
-  # timestamp, severity, client / server and either text or html formatted message to log.
-  messageAcceptable: (m)->
-    return (m? and m.timestamp? and m.severity? and m.isServer? and (m.textMessage? or m.htmlMessage?) )
-
-  # `addMessage` is the listening method that takes messages from Emitters
-  # TODO: do we really need to throw an error??? add some kind of 'strict mode'?
-  addMessage: (message, useBuffer = false)->
-    #console.log "Logger::addMessage() with useBuffer: #{useBuffer}"
-    throw new Error "Unacceptable message format in logger: #{@name}" if not @messageAcceptable message
-    if @useBuffer or useBuffer then @messageBuffer.push message else @log message
-
-  # `log` - 'virtual' function that does actual output of the message. Needs to be overriden by extending
-  # classes with e.g. logging to console or inserting into Meteor Collection. Does nothing here.
-  log: (message)->
-    throw new Error "log() function needs to be overriden to perform actual output!"
-
-  # processing the buffer
-  processBuffer: ->
-    return unless @messageBuffer.length > 0
-    @log obj for obj in @messageBuffer
-    @messageBuffer = []
-
-# <a name="abcde"></a>
-#
-# ### GenericEmitter
-# Implements typical logging functionality to be used inside an app - log messages with various severity levels.
-
-class Observatory.GenericEmitter extends Observatory.MessageEmitter
-
-  # Creating a named emitter with maximum severity of the messages to emit equal to `maxSeverity`
-  # and `formatter` as a formatting function. This provides flexibility on how the message to be passed on to
-  # loggers is formed. E.g., here it's given a basic format, when we'll use Meteor we'll provide a more
-  # advanced formatter that will set userId, IP address etc.
-  constructor: (name, maxSeverity, formatter)->
-    @maxSeverity = maxSeverity
-    if formatter? and typeof formatter is 'function'
-      @formatter = formatter
-    else
-      @formatter = Observatory.formatters.basicFormatter
-
-    super name, @formatter
-    # some dynamic js magic - defining different severity method aliases programmatically to be DRY.
-    # TODO: need to keep in mind bind() doesn't work in IE8 and below, but there's a
-    # [script to fix this](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind#Compatibility)
-    for m,i in ['fatal','error','warn','info','verbose','debug','insaneVerbose']
-      @[m] = @_emitWithSeverity.bind this, i
-    # same but ignoring global logging level
-    for m,i in ['_fatal','_error','_warn','_info','_verbose','_debug','_insaneVerbose']
-      @[m] = @_forceEmitWithSeverity.bind this, i
-
-  # Trace a error - format stacktrace nicely and output with ERROR level
-  trace: (error, msg, module)->
-    message = msg + '\n' + (error.stack ? error)
-    @_emitWithSeverity Observatory.LOGLEVEL.ERROR, message, error, module
-
-  # Low-level emitting method that formats message and emits it
-  #
-  # * `severity` - level with which to emit a message. Won't be emitted if higher than `@maxSeverity`
-  # * `message` - text message to include into the full log message to be passed to loggers
-  # * `module` - optional module name. If the emitter is named, its' name will be used instead in any case.
-  # * `obj` - optional arbitrary json-able object to be included into full log message, e.g. error object in the call to `error`
-  _forceEmitWithSeverity: (severity, message, obj, module, type, buffer = false)->
-    if typeof message is 'object'
-      buffer = type
-      type = module
-      module = obj
-      obj = message
-      message = JSON.stringify obj
-    if typeof obj is 'string'
-      buffer = type
-      type = module
-      module = obj
-      obj = null
-
-    options = severity: severity, message: message, object: obj, type: type, module: module ? @name # explicit module overrides name
-    @emitMessage @formatter(options), buffer
-
-  _emitWithSeverity: (severity, message, obj, module, type, buffer = false)->
-    return false if not severity? or (severity > @maxSeverity)
-    @_forceEmitWithSeverity severity, message, obj, module, type, buffer
-
-# ### ConsoleLogger
-# Basic logger to the console, without any fancy stuff
-class Observatory.ConsoleLogger extends Observatory.Logger
-  # Simply redefining log() to output messages to the console
-  log: (m) ->
-    console.log @formatter m
-
-  # ignoring any buffering requests
-  addMessage: (message, useBuffer)->
-    #console.log "addMessage() called for message:"
-    #console.log message
-    throw new Error "Unacceptable message format in logger: #{@name}" if not @messageAcceptable message
-    @log message
 
 
 (exports ? this).Observatory = Observatory
