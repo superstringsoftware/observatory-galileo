@@ -27,6 +27,17 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     object.timeElapsed = time
     @_forceEmitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile', buffer
 
+
+  # calculating profiling level based on time elapsed and current thresholds
+  _determineProfilingLevel: (timeElapsed)->
+    # determine with which level to log
+    loglevel = Observatory.LOGLEVEL.ERROR
+    if timeElapsed < Observatory.settings.profiling.WARNING_THRESHOLD
+      loglevel = Observatory.LOGLEVEL.VERBOSE
+    else if timeElapsed < Observatory.settings.profiling.DANGER_THRESHOLD
+      loglevel = Observatory.LOGLEVEL.WARNING
+    loglevel
+
   # TODO: write tests for profiling functions
   # profile sync function execution
   # * options: additional options to put into profiling log message
@@ -45,13 +56,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     t2 = Date.now() - t1
 
     # determine with which level to log
-    # TODO: encapsulate it in some sort of Profiler object - as it will be used in Meteor classes as well!
-    loglevel = Observatory.LOGLEVEL.ERROR
-    if t2 < Observatory.settings.profiling.WARNING_THRESHOLD
-      loglevel = Observatory.LOGLEVEL.VERBOSE
-    else if t2 < Observatory.settings.profiling.DANGER_THRESHOLD
-      loglevel = Observatory.LOGLEVEL.WARNING
-
+    loglevel = @_determineProfilingLevel t2
     # only logging if thresholds are ok, otherwise simply returning
     return ret if loglevel > Observatory.settings.profiling.maxProfilingLevel
 
@@ -85,13 +90,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
       t2 = Date.now() - @__startTime
 
       # determine with which level to log
-      # TODO: encapsulate it in some sort of Profiler object - as it will be used in Meteor classes as well!
-      loglevel = Observatory.LOGLEVEL.ERROR
-      if t2 < Observatory.settings.profiling.WARNING_THRESHOLD
-        loglevel = Observatory.LOGLEVEL.VERBOSE
-      else if t2 < Observatory.settings.profiling.DANGER_THRESHOLD
-        loglevel = Observatory.LOGLEVEL.WARNING
-
+      loglevel = @_determineProfilingLevel t2
       # only logging if thresholds are ok, otherwise simply returning
       if loglevel < Observatory.settings.profiling.maxProfilingLevel
         msg = "#{options.method} call finished in #{t2} ms | #{options.message}"
