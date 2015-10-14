@@ -27,7 +27,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     object.timeElapsed = time
     @_forceEmitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile', buffer
 
-  # TODO: check if profiling is on and optimize method call if not - so that people can wrap into profiling wherever they want and not worry about performance
+  # TODO: write tests for profiling functions
   # profile sync function execution
   # * options: additional options to put into profiling log message
   # * - message: message to log with
@@ -35,11 +35,25 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
   # * - buffer: whether to buffer log output (needed in Meteor mostly)
   # * func: function to profile followed by its' arguments, however many
   profile: (options, thisArg, func)=>
+    # first checking if profiling is off and then simply passing the call - minimal overhead!
     args = _.rest (_.rest (_.rest arguments))
+    return func.apply thisArg, args unless Observatory.settings.profiling.isOn
 
+    # ok, it's on, profiling
     t1 = Date.now()
     ret = func.apply thisArg, args
     t2 = Date.now() - t1
+
+    # determine with which level to log
+    # TODO: encapsulate it in some sort of Profiler object - as it will be used in Meteor classes as well!
+    loglevel = Observatory.LOGLEVEL.ERROR
+    if t2 < Observatory.settings.profiling.WARNING_THRESHOLD
+      loglevel = Observatory.LOGLEVEL.VERBOSE
+    else if t2 < Observatory.settings.profiling.DANGER_THRESHOLD
+      loglevel = Observatory.LOGLEVEL.WARNING
+
+    # only logging if thresholds are ok, otherwise simply returning
+    return ret if loglevel > Observatory.settings.profiling.maxProfilingLevel
 
     msg = "#{options.method} call finished in #{t2} ms | #{options.message}"
     object =
@@ -47,10 +61,11 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
       method: options.method
       arguments: EJSON.stringify args
       stack: (new Error()).stack
-    @_verbose msg, object, 'profiler', 'profile', (options.buffer? is true)
+    @_forceEmitWithSeverity loglevel, msg, object, 'profiler', 'profile', (options.buffer? is true)
     #console.log object
     ret
 
+  # TODO: properly handle profile.start events - only record them if t2 is within thresholds!!! (do we even need profile.start?)
   # profile async function execution
   # * options: additional options to put into profiling log message
   # * - message: message to log with
@@ -58,25 +73,42 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
   # * - buffer: whether to buffer log output (needed in Meteor mostly)
   # * func: function to profile followed by its' arguments, however many
   profileAsync: (options, thisArg, func)=>
+    # first checking if profiling is off and then simply passing the call - minimal overhead!
     args = _.rest (_.rest (_.rest arguments))
+    return func.apply thisArg, args unless Observatory.settings.profiling.isOn
 
     sargs = EJSON.stringify args
     orig_callback = args.pop()
 
+    # redefining callback for recording execution times
     callback = (err,res)=>
       t2 = Date.now() - @__startTime
-      msg = "#{options.method} call finished in #{t2} ms | #{options.message}"
-      object =
-        timeElapsed: t2
-        method: options.method
-        arguments: sargs
-        stack: (new Error()).stack
-        type: "profile.end"
-      @_verbose msg, object, 'profiler', 'profile', (options.buffer? is true)
-      #console.log object
+
+      # determine with which level to log
+      # TODO: encapsulate it in some sort of Profiler object - as it will be used in Meteor classes as well!
+      loglevel = Observatory.LOGLEVEL.ERROR
+      if t2 < Observatory.settings.profiling.WARNING_THRESHOLD
+        loglevel = Observatory.LOGLEVEL.VERBOSE
+      else if t2 < Observatory.settings.profiling.DANGER_THRESHOLD
+        loglevel = Observatory.LOGLEVEL.WARNING
+
+      # only logging if thresholds are ok, otherwise simply returning
+      if loglevel < Observatory.settings.profiling.maxProfilingLevel
+        msg = "#{options.method} call finished in #{t2} ms | #{options.message}"
+        object =
+          timeElapsed: t2
+          method: options.method
+          arguments: sargs
+          stack: (new Error()).stack
+          type: "profile.end"
+        @_forceEmitWithSeverity loglevel, msg, object, 'profiler', 'profile', (options.buffer? is true)
+        #console.log object
 
       orig_callback err, res if typeof orig_callback is 'function'
 
+    # END OF callback definition
+
+    # putting back arguments for the function being profiled
     if typeof orig_callback is 'function'
       args.push callback
     else
@@ -97,16 +129,20 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
 
 
 
+  # TODO: add recursion down to specific level (to work around circular objects)
   inspect: (obj, long = false, print = false)->
     ret =
       functions: []
       objects: []
       vars: []
+      varsObject: {}
     for k,v of obj
       switch typeof v
         when 'function' then ret.functions.push key: k, value: v.toString()
         when 'object' then ret.objects.push key: k, value: (if long then v else "Object")
-        else ret.vars.push key: k, value: v
+        else
+          ret.vars.push key: k, value: v
+          ret.varsObject.k = v
     if print
       for t in ['functions','objects','vars']
         console.log "****** PRINTING #{t} ***********" if ret[t].length > 0

@@ -45,8 +45,7 @@ _.extend Observatory,
     printToConsole: false
     profiling:
       isOn: true # globally profiling on or off?
-      onlyDanger: false # only log profiling times above DANGER threshold?
-      onlyWarning: false # only log profiling times above WARNING threshold?
+      maxProfilingLevel: 2 # WARNING by default - use LOGLEVELS here!!!
       DANGER_THRESHOLD: 1000 # 1s
       WARNING_THRESHOLD: 100 # 100 ms
 
