@@ -1,7 +1,7 @@
-chai = require 'chai'
-should = chai.should()
+#chai = require 'chai'
+#should = chai.should()
 #expect = chai.expect
-Observatory = (require '../src/Observatory.coffee').Observatory
+#Observatory = (require '../src/Observatory.coffee').Observatory
 {MessageEmitter, GenericEmitter, Logger, ConsoleLogger, LOGLEVEL} = Observatory
 #console.log MessageEmitter
 

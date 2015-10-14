@@ -1,8 +1,8 @@
-_ = require 'underscore'
-chai = require 'chai'
-should = chai.should()
+#_ = require 'underscore'
+#chai = require 'chai'
+#should = chai.should()
 #expect = chai.expect
-Observatory = (require '../src/Toolbox.coffee').Observatory
+#Observatory = (require '../src/Toolbox.coffee').Observatory
 #console.log Observatory
 #Observatory = (require '../src/Observatory.coffee').Observatory
 {Toolbox, MessageEmitter, GenericEmitter, Logger, ConsoleLogger, LOGLEVEL} = Observatory

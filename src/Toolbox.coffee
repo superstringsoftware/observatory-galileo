@@ -8,7 +8,7 @@ if require?
 ###
 
 # ### Constants and common definitions
-Observatory = Observatory ? {}
+Observatory = @Observatory ? {}
 
 #console.log Observatory
 # TLog replacement?
