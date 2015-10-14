@@ -12,6 +12,8 @@ Observatory = Observatory ? {}
 
 #console.log Observatory
 # TLog replacement?
+
+# TODO: profiling methods need to go to a separate profiler emitter, with it's own formatter - this way we'll ensure all profiling messages are formatted correctly
 class Observatory.Toolbox extends Observatory.GenericEmitter
   #constructor: (name, maxSeverity, formatter)-> super name, maxSeverity, formatter
 

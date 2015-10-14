@@ -34,6 +34,7 @@ class Observatory.MessageEmitter
     l.addMessage message, buffer for l in @_loggers if @_loggers.length > 0
     message
 
+  # TODO: throw an error when there's no formatter?
   emitFormattedMessage: (message, buffer = false)->
   #console.log "MessageEmitter::emitFormattedMessage() with buffer: #{buffer}"
     @emitMessage (@formatter message), buffer if @isOn and @formatter? and (typeof @formatter is 'function')
