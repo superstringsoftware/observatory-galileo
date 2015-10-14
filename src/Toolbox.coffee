@@ -142,7 +142,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
         when 'object' then ret.objects.push key: k, value: (if long then v else "Object")
         else
           ret.vars.push key: k, value: v
-          ret.varsObject.k = v
+          ret.varsObject[k] = v
     if print
       for t in ['functions','objects','vars']
         console.log "****** PRINTING #{t} ***********" if ret[t].length > 0
