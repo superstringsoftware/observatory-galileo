@@ -15,42 +15,85 @@ Observatory = Observatory ? {}
 class Observatory.Toolbox extends Observatory.GenericEmitter
   #constructor: (name, maxSeverity, formatter)-> super name, maxSeverity, formatter
 
-  exec: (f, options = errors: true, profile: true, profileLoglevel: 'INFO', message: "exec() call", module: 'profiler' )=>
-    if typeof f isnt 'function'
-      @error "Tried to call exec() without a function as an argument"
-      return 
-
-    obj = 
-      function: f.toString()
-      type: 'profile'
-
-    @_emitWithSeverity Observatory.LOGLEVEL[options.profileLoglevel], options.message + " starting for " + obj.function, options.module if options.profile
-    if options.errors
-      try
-        t = Date.now()
-        ret = f.call this
-        t2 = Date.now() - t
-      catch e
-        t2 = Date.now() - t
-        @trace e
-    else
-      t = Date.now()
-      ret = f.call this
-      t2 = Date.now() - t
-
-    @profile options.message + " done in #{t2} ms", t2, obj, module, options.profileLoglevel if options.profile
-    ret
-
-
-  profile: (message, time, object, module = 'profiler', severity = 'VERBOSE', buffer = false)->
+  # Simply records log with type = 'profile'
+  dumbProfile: (message, time, object, module = 'profiler', severity = 'VERBOSE', buffer = false)->
     object = object ? {}
     object.timeElapsed = time
     @_emitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile', buffer
 
-  _profile: (message, time, object, module = 'profiler', severity = 'VERBOSE', buffer = false)->
+  # Simply records log with type = 'profile' and disregards current logging level (severity)
+  forceDumbProfile: (message, time, object, module = 'profiler', severity = 'VERBOSE', buffer = false)->
     object = object ? {}
     object.timeElapsed = time
     @_forceEmitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile', buffer
+
+  # profile sync function execution
+  # * options: additional options to put into profiling log message
+  # * - message: message to log with
+  # * - method: method name that we are profiling
+  # * - buffer: whether to buffer log output (needed in Meteor mostly)
+  # * func: function to profile followed by its' arguments, however many
+  profile: (options, thisArg, func)=>
+    args = _.rest (_.rest (_.rest arguments))
+
+    t1 = Date.now()
+    ret = func.apply thisArg, args
+    t2 = Date.now() - t1
+
+    msg = "#{options.method} call finished in #{t2} ms | #{options.message}"
+    object =
+      timeElapsed: t2
+      method: options.method
+      arguments: EJSON.stringify args
+      stack: (new Error()).stack
+    @_verbose msg, object, 'profiler', 'profile', (options.buffer? is true)
+    #console.log object
+    ret
+
+  # profile async function execution
+  # * options: additional options to put into profiling log message
+  # * - message: message to log with
+  # * - method: method name that we are profiling
+  # * - buffer: whether to buffer log output (needed in Meteor mostly)
+  # * func: function to profile followed by its' arguments, however many
+  profileAsync: (options, thisArg, func)=>
+    args = _.rest (_.rest (_.rest arguments))
+
+    sargs = EJSON.stringify args
+    orig_callback = args.pop()
+
+    callback = (err,res)=>
+      t2 = Date.now() - @__startTime
+      msg = "#{options.method} call finished in #{t2} ms | #{options.message}"
+      object =
+        timeElapsed: t2
+        method: options.method
+        arguments: sargs
+        stack: (new Error()).stack
+        type: "profile.end"
+      @_verbose msg, object, 'profiler', 'profile', (options.buffer? is true)
+      #console.log object
+
+      orig_callback err, res if typeof orig_callback is 'function'
+
+    if typeof orig_callback is 'function'
+      args.push callback
+    else
+      args.push orig_callback
+      args.push callback
+
+
+    msg = "#{options.method} call started"
+    object =
+      method: options.method
+      arguments: sargs
+      stack: (new Error()).stack
+      type: "profile.start"
+    @_verbose msg, object, 'profiler', 'profile', (options.buffer? is true)
+
+    @__startTime = Date.now()
+    func.apply thisArg, args
+
 
 
   inspect: (obj, long = false, print = false)->
