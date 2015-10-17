@@ -62,7 +62,8 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     # only logging if thresholds are ok, otherwise simply returning
     return ret if loglevel > Observatory.settings.profiling.maxProfilingLevel
 
-    msg = "#{options.method} call finished in #{t2} ms | #{options.message}"
+    options.message = if options.message? then "| #{options.message}" else ''
+    msg = "#{options.method} call finished in #{t2} ms #{options.message}"
     object =
       timeElapsed: t2
       method: options.method
@@ -95,7 +96,8 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
       loglevel = @_determineProfilingLevel t2
       # only logging if thresholds are ok, otherwise simply returning
       if loglevel < Observatory.settings.profiling.maxProfilingLevel
-        msg = "#{options.method} call finished in #{t2} ms | #{options.message}"
+        options.message = if options.message? then "| #{options.message}" else ''
+        msg = "#{options.method} call finished in #{t2} ms #{options.message}"
         object =
           timeElapsed: t2
           method: options.method
