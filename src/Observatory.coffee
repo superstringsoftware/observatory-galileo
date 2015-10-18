@@ -47,7 +47,7 @@ _.extend Observatory,
       isOn: true # globally profiling on or off?
       maxProfilingLevel: 2 # WARNING by default - use LOGLEVELS here!!!
       DANGER_THRESHOLD: 1000 # 1s
-      WARNING_THRESHOLD: 50 # 50 ms
+      WARNING_THRESHOLD: 100 # 100 ms
 
   # Initializing the system - creating loggers, subscribing etc
   # Currently creates 1 ConsoleLogger and subscribes it system-wide.
