@@ -9,6 +9,18 @@ class Observatory.MessageEmitter
     @_loggers = [] # array of subscribing loggers
     @isOn = true
 
+  # Method that needs to be overridden by child emitters to add additional fields this emitter wants to support
+  # Here, returns bare minimum
+  # EVERY emitter needs to build up on this base
+  messageStub: (severity = Observatory.LOGLEVEL.DEBUG, message = '') ->
+    msg =
+      timestamp: new Date
+      severity: severity
+      textMessage: message
+      isServer: Observatory.isServer()
+      emitter: @name
+
+
   _getLoggers: -> @_loggers
 
   # only emit messages if we are on
