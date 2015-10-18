@@ -31,7 +31,7 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
   # Trace a error - format stacktrace nicely and output with ERROR level
   trace: (error, msg, module)->
     message = msg + '\n' + (error.stack ? error)
-    @_emitWithSeverity Observatory.LOGLEVEL.ERROR, message, error, module
+    @_emitWithSeverity Observatory.LOGLEVEL.ERROR, message, {module: module, obj: error}
 
   # Low-level emitting method that formats message and emits it
   #
@@ -46,8 +46,8 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
   # (severity, message) - text message only
   # (severity, options) - options.message needs to contain the text message
   #
-  # Here's the possible options fields description:
   # * `severity` - Number, level with which to emit a message. Won't be emitted if higher than `@maxSeverity`
+  # Here's the possible options fields description:
   # * `message` - String, text message to include into the full log message to be passed to loggers
   # * `module` - String, optional module name. If the emitter is named, its' name will be used instead in any case.
   # * `type` - String, type of the message, used internally for distinguishing between different message types for further processing
@@ -64,16 +64,13 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
         options = {} unless typeof options is 'object'
         options.message = message
       else throw new Error "Logging methods need to pass at least a text message as a parameter!"
-    msg = @messageStub severity, options.message
-    _.extend msg,
-      module: options.module ? @name
-      object: options.object ? options.obj
-      type: options.type ? 'logs'
 
+    msg = @messageStub severity, options.message, options.type, options.obj ? options.object, options.module
     @emitMessage msg, options.useBuffer ? false
 
   _emitWithSeverity: (severity, message, options)->
     return false if typeof severity isnt 'number' or (severity > @maxSeverity)
     @_forceEmitWithSeverity severity, message, options
+
 
 (exports ? this).Observatory = Observatory

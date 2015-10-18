@@ -12,13 +12,16 @@ class Observatory.MessageEmitter
   # Method that needs to be overridden by child emitters to add additional fields this emitter wants to support
   # Here, returns bare minimum
   # EVERY emitter needs to build up on this base
-  messageStub: (severity = Observatory.LOGLEVEL.DEBUG, message = '') ->
+  messageStub: (severity = Observatory.LOGLEVEL.DEBUG, message = '', type = 'logs', object = undefined, module = @name) ->
     msg =
       timestamp: new Date
       severity: severity
       textMessage: message
       isServer: Observatory.isServer()
       emitter: @name
+      module: module #? @name
+      object: object
+      type: type #? 'logs'
 
 
   _getLoggers: -> @_loggers
