@@ -67,7 +67,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     object =
       timeElapsed: t2
       method: options.method
-      arguments: EJSON.stringify args
+      arguments: JSON.stringify args
       stack: (new Error()).stack
     @_forceEmitWithSeverity loglevel, msg, object, 'profiler', 'profile', (options.buffer? is true)
     #console.log object
@@ -85,7 +85,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     args = _.rest (_.rest (_.rest arguments))
     return func.apply thisArg, args unless Observatory.settings.profiling.isOn
 
-    sargs = EJSON.stringify args
+    sargs = JSON.stringify args
     orig_callback = args.pop()
 
     # redefining callback for recording execution times
