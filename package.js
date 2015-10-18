@@ -1,7 +1,7 @@
 try {
     Package.describe({
         summary: "Observatory: Galileo. Foundational classes for the Observatory suite (http://observatoryjs.com). Meteor-independent.",
-        version: "0.9.5",
+        version: "0.9.9",
         git: "https://github.com/superstringsoftware/observatory-galileo.git"
     });
 
