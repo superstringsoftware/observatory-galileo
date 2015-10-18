@@ -64,8 +64,10 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
         timeElapsed: timeElapsed
         method: options.method
         arguments: JSON.stringify args
-        stack: (new Error()).stack
-        type: "profile.end"
+        #stack: (new Error()).stack
+        type: options.profileType ? "profile.end"
+    _.extend opts.obj, options.obj
+    opts
 
   # TODO: write tests for profiling functions
   # profile sync function execution
