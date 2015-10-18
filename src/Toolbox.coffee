@@ -18,16 +18,28 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
   #constructor: (name, maxSeverity, formatter)-> super name, maxSeverity, formatter
 
   # Simply records log with type = 'profile'
-  dumbProfile: (message, time, object, module = 'profiler', severity = 'VERBOSE', buffer = false)->
+  dumbProfile: (message, time, object, module = 'Profiler', severity = 'VERBOSE', buffer = false)->
     object = object ? {}
     object.timeElapsed = time
-    @_emitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile', buffer
+    options =
+      obj: object
+      message: message
+      module: module
+      useBuffer: buffer
+      type: 'profile'
+    @_emitWithSeverity Observatory.LOGLEVEL[severity], options
 
   # Simply records log with type = 'profile' and disregards current logging level (severity)
-  forceDumbProfile: (message, time, object, module = 'profiler', severity = 'VERBOSE', buffer = false)->
+  forceDumbProfile: (message, time, object, module = 'Profiler', severity = 'VERBOSE', buffer = false)->
     object = object ? {}
     object.timeElapsed = time
-    @_forceEmitWithSeverity Observatory.LOGLEVEL[severity], message, object, module, 'profile', buffer
+    options =
+      obj: object
+      message: message
+      module: module
+      useBuffer: buffer
+      type: 'profile'
+    @_forceEmitWithSeverity Observatory.LOGLEVEL[severity], options
 
 
   # calculating profiling level based on time elapsed and current thresholds
