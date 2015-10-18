@@ -40,12 +40,27 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
       loglevel = Observatory.LOGLEVEL.WARNING
     loglevel
 
+  # preparing message to emit based on options (as in profile / profileAsync methods) and time elapsed
+  _prepareMessage: (timeElapsed, options, args)->
+    msg = if options.message? then "| #{options.message}" else ''
+    opts =
+      message: "#{options.method} call finished in #{timeElapsed} ms #{msg}"
+      type: options.type ? 'profile'
+      module: options.module ? 'Profiler'
+      useBuffer: options.useBuffer ? false
+      obj:
+        timeElapsed: timeElapsed
+        method: options.method
+        arguments: JSON.stringify args
+        stack: (new Error()).stack
+        type: "profile.end"
+
   # TODO: write tests for profiling functions
   # profile sync function execution
   # * options: additional options to put into profiling log message
   # * - message: message to log with
   # * - method: method name that we are profiling
-  # * - buffer: whether to buffer log output (needed in Meteor mostly)
+  # * - useBuffer: whether to buffer log output (needed in Meteor mostly)
   # * func: function to profile followed by its' arguments, however many
   profile: (options, thisArg, func)=>
     # first checking if profiling is off and then simply passing the call - minimal overhead!
@@ -62,14 +77,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     # only logging if thresholds are ok, otherwise simply returning
     return ret if loglevel > Observatory.settings.profiling.maxProfilingLevel
 
-    options.message = if options.message? then "| #{options.message}" else ''
-    msg = "#{options.method} call finished in #{t2} ms #{options.message}"
-    object =
-      timeElapsed: t2
-      method: options.method
-      arguments: JSON.stringify args
-      stack: (new Error()).stack
-    @_forceEmitWithSeverity loglevel, msg, object, 'profiler', 'profile', (options.buffer? is true)
+    @_forceEmitWithSeverity loglevel, @_prepareMessage t2, options, args
     #console.log object
     ret
 
@@ -85,7 +93,6 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     args = _.rest (_.rest (_.rest arguments))
     return func.apply thisArg, args unless Observatory.settings.profiling.isOn
 
-    sargs = JSON.stringify args
     orig_callback = args.pop()
 
     # redefining callback for recording execution times
@@ -96,15 +103,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
       loglevel = @_determineProfilingLevel t2
       # only logging if thresholds are ok, otherwise simply returning
       if loglevel < Observatory.settings.profiling.maxProfilingLevel
-        options.message = if options.message? then "| #{options.message}" else ''
-        msg = "#{options.method} call finished in #{t2} ms #{options.message}"
-        object =
-          timeElapsed: t2
-          method: options.method
-          arguments: sargs
-          stack: (new Error()).stack
-          type: "profile.end"
-        @_forceEmitWithSeverity loglevel, msg, object, 'profiler', 'profile', (options.buffer? is true)
+        @_forceEmitWithSeverity loglevel, @_prepareMessage t2, options, args
         #console.log object
 
       orig_callback err, res if typeof orig_callback is 'function'
@@ -122,10 +121,9 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
     msg = "#{options.method} call started"
     object =
       method: options.method
-      arguments: sargs
       stack: (new Error()).stack
       type: "profile.start"
-    @_verbose msg, object, 'profiler', 'profile', (options.buffer? is true)
+    @_verbose msg, {object: object, module: 'Profiler', useBuffer: options.useBuffer ? false}
 
     @__startTime = Date.now()
     func.apply thisArg, args
