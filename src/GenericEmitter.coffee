@@ -57,6 +57,7 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
   # NOTE: it DOES NOT use formatters any more and DOES NOT check for correct formatting for performance, so there's potential to mess things up!!!
   #
   _forceEmitWithSeverity: (severity, message, options)->
+    #console.log "Toolbox::_forceEmitWithSeverity() #{severity}", message, options
     if typeof message is 'object' # assuming no message, only options passed in
       options = message
     else
@@ -66,6 +67,7 @@ class Observatory.GenericEmitter extends Observatory.MessageEmitter
       else throw new Error "Logging methods need to pass at least a text message as a parameter!"
 
     msg = @messageStub severity, options.message, options.type, options.obj ? options.object, options.module
+    #console.log "Proceeding to log with buffer = #{options.useBuffer}:", msg
     @emitMessage msg, options.useBuffer ? false
 
   _emitWithSeverity: (severity, message, options)->

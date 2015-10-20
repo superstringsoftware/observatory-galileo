@@ -43,7 +43,7 @@ class Observatory.MessageEmitter
   # Normally, only system-wide loggers are used, subscription for specific emitters is to provide
   # finer-grained control.
   emitMessage: (message, buffer = false)->
-  #console.log "MessageEmitter::emitMessage() with buffer: #{buffer}"
+    #console.log "MessageEmitter::emitMessage() with buffer: #{buffer}", message
     return unless @isOn
     l.addMessage message, buffer for l in Observatory.getLoggers()
     l.addMessage message, buffer for l in @_loggers if @_loggers.length > 0

@@ -45,6 +45,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
   # calculating profiling level based on time elapsed and current thresholds
   _determineProfilingLevel: (timeElapsed)->
     # determine with which level to log
+    # console.log "determine loglevel for #{timeElapsed}"
     loglevel = Observatory.LOGLEVEL.ERROR
     if timeElapsed < Observatory.settings.profiling.WARNING_THRESHOLD
       loglevel = Observatory.LOGLEVEL.VERBOSE
@@ -67,6 +68,7 @@ class Observatory.Toolbox extends Observatory.GenericEmitter
         #stack: (new Error()).stack
         type: options.profileType ? "profile.end"
     _.extend opts.obj, options.obj
+    #console.log "prepareMessage() for profile: ", opts
     opts
 
   # TODO: write tests for profiling functions
